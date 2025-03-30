@@ -1,6 +1,9 @@
 #ifndef PCBMANAGER_H
 #define PCBMANAGER_H
 
+#include "bitmap.h"
+#include "pcb.h"
+
 class PCBManager{
 
     public:
@@ -12,7 +15,8 @@ class PCBManager{
 
     private:
         Bitmap* bitmap;
-        PCB** pcbs;     
+        PCB** pcbs;
+        Lock* pcbManagerLock;     
 }
 
 #endif

@@ -4,7 +4,7 @@
 class PCB{
 
     public:
-        PCB();
+        PCB(int pid);
         ~PCB();
         int pid;
         PCB* parent;
@@ -12,7 +12,7 @@ class PCB{
         Thread* thread;
     
     private:
-        void AddChiled(PCB* pcb);
+        void AddChild(PCB* pcb);
         int RemoveChild(PCB* pcb);
 }
 

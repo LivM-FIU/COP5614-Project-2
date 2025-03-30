@@ -1,10 +1,11 @@
 #include "pcb.h"
 
-PCB:: PCB(){
+PCB:: PCB(int id){
 
     parent = NULL;
-      = new List();
+    children = new List();
     thread = NULL;
+    pid = id;
 }
 
 PCB:: ~PCB(){
@@ -15,6 +16,6 @@ void PCB:: AddChild(PCB* pcb){
     children -> Append(pcb);
 }
 
-int PCB:: RemoveChiled(PCB* pcb){
+int PCB:: RemoveChild(PCB* pcb){
     return children -> RemoveItem(pcb);
 }
