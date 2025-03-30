@@ -15,7 +15,10 @@
 
 #include "copyright.h"
 #include "filesys.h"
+<<<<<<< HEAD
 #include "pcb.h"
+=======
+>>>>>>> 9ebf9d60684a6d62655ae7944013a2acf924bb67
 
 #define UserStackSize		1024 	// increase this as necessary!
 
@@ -35,7 +38,10 @@ class AddrSpace {
     void RestoreState();		// info on a context switch 
     unsigned int GetNumPages();
     TranslationEntry* GetPageTable();
+<<<<<<< HEAD
     PCB* pcb;
+=======
+>>>>>>> 9ebf9d60684a6d62655ae7944013a2acf924bb67
 
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation

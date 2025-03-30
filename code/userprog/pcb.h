@@ -4,7 +4,11 @@
 class PCB{
 
     public:
+<<<<<<< HEAD
         PCB(int pid);
+=======
+        PCB();
+>>>>>>> 9ebf9d60684a6d62655ae7944013a2acf924bb67
         ~PCB();
         int pid;
         PCB* parent;
@@ -12,7 +16,11 @@ class PCB{
         Thread* thread;
     
     private:
+<<<<<<< HEAD
         void AddChild(PCB* pcb);
+=======
+        void AddChiled(PCB* pcb);
+>>>>>>> 9ebf9d60684a6d62655ae7944013a2acf924bb67
         int RemoveChild(PCB* pcb);
 }
 
