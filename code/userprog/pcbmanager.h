@@ -17,6 +17,6 @@ class PCBManager{
         Bitmap* bitmap;
         PCB** pcbs;
         Lock* pcbManagerLock;     
-}
+};
 
 #endif

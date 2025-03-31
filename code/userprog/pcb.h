@@ -14,7 +14,7 @@ class PCB{
     private:
         void AddChild(PCB* pcb);
         int RemoveChild(PCB* pcb);
-}
+};
 
 
 #endif
