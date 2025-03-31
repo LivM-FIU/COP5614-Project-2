@@ -36,6 +36,7 @@ class AddrSpace {
     unsigned int GetNumPages();
     TranslationEntry* GetPageTable();
     PCB* pcb;
+    bool valid; // is AddrSpace valid
 
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation

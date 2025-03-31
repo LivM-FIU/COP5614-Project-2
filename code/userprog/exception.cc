@@ -59,10 +59,108 @@ void doExit(int status)
     currentThread->Finish();
 }
 
-int doFork()
+
+void incrementPC(){
+    int oldPCReg = machine -> ReadRegister(PCReg);
+    
+    machine -> WriteRegister(PrevPCReg, oldPCReg); 
+    machine -> WriteRegister(PCReg, oldPCReg + 4); 
+    machine -> WriteRegister(NextPCReg, oldPCReg + 8); 
+    
+}
+
+void childFunction(int pid){
+    // Restore the state of registers
+    // currentThread -> RestoreUserState()
+    // Restore the page table for the child
+    // currentThread -> space -> RestoreState()
+    // PCReg == ReadRegister(PCReg)
+    // print message for chid creation(pid, PcReg, 
+    //currentThread -> space -> GetNumPages())
+    // machine -> Run()
+}
+
+int doFork(int functionAddr)
 {
+    // 1.Check if sufficirnt memory exist to create a new proces
+    // currentThread -> space -> GetNumPages() <= mm -> GetFreePageCount()
+    // if check fails, return -1
+    // 2. SaveUserState for the parent
+    // currentThread-> SaveUserState()
+    // 3. Create a new address space for child by copyng the parent address space
+    // Parent: currentThread -> space
+    // Child: new AddrSpace(currentThread -> space)
+    // 4. Create a new thread for the child and set its addrSpace
+    // childThread = new Thread("childThread")
+    // child -> space = childAddSpace;
+    // 5. Create a PCB for the child and connect it all up
+    // pcb: pcbManager -> AllocatePCB();
+    // pcb -> thread = childThread
+    // set parent for child pcb
+    // add child for parent
+    // 6. Set up machine registers for child and save it to child trhead
+    // PCReg: functionAddr
+    // PrevPCReg: functionAddr - 4
+    // NextPCReg: functionAddr + 4
+    // childThread -> SaveUserState()
+    //7. Call thread -> fork on child
+    // childThread -> Fork(childFunction, pvb -> pid)
+    // 8. Restore registe state of parent user-level process
+    // currentThread -> RestoreUserState()
+    //9. return pcb -> pid
 
+}
 
+int doExec(char* filename){
+    // Use progtest.cc: StartProcess() as a guide
+    // Open file and check validity
+
+    // OpenFile *executable = fileSystem->Open(filename);
+    // AddrSpace *space;
+
+    // if (executable == NULL) {
+	// printf("Unable to open file %s\n", filename);
+	// return -1 ;
+    // }
+
+    // Create new address space
+    // space = new AddrSpace(executable)
+    // Check if AddrSpace creation was succesful
+    // if(space -> vslid != true) 
+    // printf("Could not create an address space \n")
+    // return -1 
+
+    //Create a new PCB for the new address space
+    // Can you reuse existing pcb?
+    //PCB* pcb = pcbManager -> AllocatePCB()
+    // Initialize parent
+    // pcb -> parent = currentThread
+    //space -> pcb = pcb
+    // Set the Thread for the new pcb
+    // pcb -> thread = currentThread
+    // Delete current address space
+    // delete currentThread -> space -> pcb -> parent
+    // set the address space for currentTthread
+    // currentThread ->space = space
+
+    //  delete executable;
+
+    // Initialize registers for new addrSpace
+    // space -> InitRegisters()
+    // Runthe machine
+    // machine - > run()
+    // ASSERT(FALSE)
+    // return 0
+}
+
+char* translate(int virtAddr){
+    unsigned int pageNumber = virtAddr / 128;
+    unsigned int pageOffset = virtAddr % 128;
+    unsigned int frameNumber = machine -> pageTable[pageNumber].physicalPage;
+    unsigned int physicalAddr = frameNumber*128 + pageOffset;
+    char* fileName = &(machine -> mainMemory[physicalAddr]);
+
+    return fileName;
 }
 
 void ExceptionHandler(ExceptionType which)
@@ -81,7 +179,16 @@ void ExceptionHandler(ExceptionType which)
     else if ((which == SyscallException) && (type == SC_Fork))
     {
         int ret = doFork(machine->ReadRegister(4));
-        machine -> WriteRegister();
+        machine -> WriteRegister(2, ret);
+        incrementPC(;)
+    }
+    else if ((which == SyscallException) && (type == SC_Exec))
+    {
+        int virtAddr = machine -> ReagRegister(4);
+        char* fileName = translate(virtAddr)
+        int ret = doExec(fileName);
+        machine -> WriteRegister(2, ret);
+        incrementPC(;)
     }
     else
     {
