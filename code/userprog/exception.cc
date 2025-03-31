@@ -198,7 +198,7 @@ int doFork(int functionAddr)
     // Create new address space
     // space = new AddrSpace(executable)
     // Check if AddrSpace creation was succesful
-    // if(space -> vslid != true)
+    // if(space -> valid != true)
     // printf("Could not create an address space \n")
     // return -1
 
