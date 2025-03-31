@@ -1,3 +1,5 @@
+#include <list.h>
+#include <thread.h>
 #ifndef PCB_H
 #define PCB_H
 
