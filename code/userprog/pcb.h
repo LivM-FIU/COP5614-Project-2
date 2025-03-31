@@ -1,28 +1,44 @@
 #ifndef PCB_H
 #define PCB_H
 
-class PCB{
+#include "list.h"
+#include "pcbmanager.h"
+#include "machine.h"
+
+
+
+class Thread;
+class PCBManager;
+extern PCBManager* pcbManager;
+
+class PCB {
 
     public:
-<<<<<<< HEAD
-        PCB(int pid);
-=======
-        PCB();
->>>>>>> 9ebf9d60684a6d62655ae7944013a2acf924bb67
+        PCB(int id);
         ~PCB();
+        int getID(); //for Exec - Trinity
         int pid;
         PCB* parent;
-        List* children;
         Thread* thread;
-    
-    private:
-<<<<<<< HEAD
+        int exitStatus;
+        bool exited; 
+        
+
+        int savedRegisters[NumTotalRegs];
+
         void AddChild(PCB* pcb);
-=======
-        void AddChiled(PCB* pcb);
->>>>>>> 9ebf9d60684a6d62655ae7944013a2acf924bb67
         int RemoveChild(PCB* pcb);
-}
+        int forkStartPC;//added here shamim
+        bool HasExited();
+        void DeleteExitedChildrenSetParentNull();
+        void SignalParent();
+        bool HasAliveChildren();
 
 
-#endif
+
+    private:
+        List* children;
+
+};
+
+#endif // PCB_H
