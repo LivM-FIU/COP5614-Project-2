@@ -81,7 +81,7 @@ void incrementPC()
 void childFunction(int pid)
 {
     // Get the PCB of the child process
-    PCB *childPCB = pcbManager->pcbs[pid];
+    PCB *childPCB = pcbManager->GetPCBByPID(pid);
     Thread *childThread = childPCB->thread;
 
     // Set the currentThread to the child (precautionary, often already correct)
@@ -170,11 +170,12 @@ int doFork(int functionAddr)
     childSpace->pcb = childPCB;
 
     // 6. Set up register state for child and save it
+    childSpace->InitRegisters(); // Ensure default regs are set
     childThread->SaveUserState();
-    childThread->setUserRegister(PCReg, functionAddr);
-    childThread->setUserRegister(PrevPCReg, functionAddr - 4);
-    childThread->setUserRegister(NextPCReg, functionAddr + 4);
-
+    childThread->userRegisters[PCReg] = functionAddr;
+    childThread->userRegisters[PrevPCReg] = functionAddr - 4;
+    childThread->userRegisters[NextPCReg] = functionAddr + 4;
+    
     // 7. Fork the child
     childThread->Fork((VoidFunctionPtr)childFunction, (int)childPCB->pid);
 
