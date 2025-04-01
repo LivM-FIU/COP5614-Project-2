@@ -172,9 +172,10 @@ int doFork(int functionAddr)
     // 6. Set up register state for child and save it
     childSpace->InitRegisters(); // Ensure default regs are set
     childThread->SaveUserState();
-    childThread->userRegisters[PCReg] = functionAddr;
-    childThread->userRegisters[PrevPCReg] = functionAddr - 4;
-    childThread->userRegisters[NextPCReg] = functionAddr + 4;
+    childThread->SetUserRegister(PCReg, functionAddr);
+    childThread->SetUserRegister(PrevPCReg, functionAddr - 4);
+    childThread->SetUserRegister(NextPCReg, functionAddr + 4);
+    
     
     // 7. Fork the child
     childThread->Fork((VoidFunctionPtr)childFunction, (int)childPCB->pid);

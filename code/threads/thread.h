@@ -102,6 +102,10 @@ class Thread {
     const char* getName() { return (name); }
     void Print() { printf("%s, ", name); }
 
+    void SetUserRegister(int regNum, int value);
+    int GetUserRegister(int regNum);
+
+
   private:
     // some of the private data for this class is listed above
     
