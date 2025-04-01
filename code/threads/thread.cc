@@ -284,7 +284,6 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
 }
 
 #ifdef USER_PROGRAM
-#include "addrspace.h"
 #include "machine.h"
 
 //----------------------------------------------------------------------
