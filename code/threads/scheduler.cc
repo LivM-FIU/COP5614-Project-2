@@ -21,7 +21,6 @@
 #include "copyright.h"
 #include "scheduler.h"
 #include "system.h"
-#include "addrspace.h"
 
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
