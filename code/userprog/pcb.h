@@ -5,7 +5,7 @@
 #include "list.h"
 #include "thread.h"
 
-class Thread; // ✅ Forward declaration
+class Thread;
 
 
 class PCB{

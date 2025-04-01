@@ -123,7 +123,7 @@ class Thread {
 // A thread running a user program actually has *two* sets of CPU registers -- 
 // one for its state while executing user code, one for its state 
 // while executing kernel code.
-
+#include "addrspace.h"
     int userRegisters[NumTotalRegs];	// user-level CPU register state
 
   public:
