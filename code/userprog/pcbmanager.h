@@ -3,6 +3,7 @@
 
 #include "bitmap.h"
 #include "pcb.h"
+#include "synch.h"
 
 class PCBManager{
 
@@ -14,7 +15,7 @@ class PCBManager{
         int DeallocatePCB(PCB* pcb);
 
     private:
-        Bitmap* bitmap;
+        BitMap* bitmap;
         PCB** pcbs;
         Lock* pcbManagerLock;     
 };
