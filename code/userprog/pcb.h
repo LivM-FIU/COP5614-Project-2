@@ -1,7 +1,12 @@
-#include <list.h>
-#include <thread.h>
+
 #ifndef PCB_H
 #define PCB_H
+
+#include "list.h"
+#include "threads/thread.h"
+
+class Thread; // ✅ Forward declaration
+
 
 class PCB{
 
