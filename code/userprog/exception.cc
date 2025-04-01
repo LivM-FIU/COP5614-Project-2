@@ -24,6 +24,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "machine.h"
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -131,7 +132,7 @@ void childFunction(int pid)
 int doFork(int functionAddr)
 {
     // 1. Check if sufficient memory exists
-    if (currentThread->space->GetNumPages() > memoryManager->GetFreePageCount())
+    if (currentThread->space->GetNumPages() > mm->GetFreePageCount())
     {
         printf("doFork: Not enough memory to fork a new process.\n");
         return -1;
@@ -306,14 +307,15 @@ void ExceptionHandler(ExceptionType which)
     {
         int ret = doFork(machine->ReadRegister(4));
         machine->WriteRegister(2, ret);
-        incrementPC(;)
+        incrementPC();
     }
     else if ((which == SyscallException) && (type == SC_Exec))
     {
-        int virtAddr = machine->ReagRegister(4);
-        char *fileName = translate(virtAddr) int ret = doExec(fileName);
+        int virtAddr = machine->ReadRegister(4);
+        char *fileName = translate(virtAddr); 
+        int ret = doExec(fileName);
         machine->WriteRegister(2, ret);
-        incrementPC(;)
+        incrementPC();
     }
     else
     {
