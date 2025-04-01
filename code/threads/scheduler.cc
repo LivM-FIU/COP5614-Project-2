@@ -21,6 +21,7 @@
 #include "copyright.h"
 #include "scheduler.h"
 #include "system.h"
+#include "addrspace.h"
 
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
@@ -93,7 +94,6 @@ Scheduler::Run (Thread *nextThread)
     Thread *oldThread = currentThread;
     
 #ifdef USER_PROGRAM			// ignore until running user programs 
-#include "addrspace.h"
 
     if (currentThread->space != NULL) {	// if this thread is a user program,
         currentThread->SaveUserState(); // save the user's CPU registers
