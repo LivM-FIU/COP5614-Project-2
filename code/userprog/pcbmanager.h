@@ -13,11 +13,13 @@ class PCBManager{
 
         PCB* AllocatePCB();
         int DeallocatePCB(PCB* pcb);
+        PCB* GetPCBByPID(int pid);
 
     private:
         BitMap* bitmap;
         PCB** pcbs;
-        Lock* pcbManagerLock;     
+        Lock* pcbManagerLock;
+        int maxProcesses; 
 };
 
 #endif
