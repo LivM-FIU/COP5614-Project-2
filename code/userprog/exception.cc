@@ -149,6 +149,12 @@ int doFork(int functionAddr)
 
     childThread->SaveUserState(); // save updated regs for when child starts
 
+    // 🔽 INSERT PRINT STATEMENTS BEFORE FORKING 🔽
+    printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
+
+    printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
+           childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
+
     // Step 7: Restore parent state
     currentThread->RestoreUserState();
 
