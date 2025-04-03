@@ -3,6 +3,7 @@
 #define PCB_H
 
 #include "list.h"
+#include "synch.h"
 #include "thread.h"
 
 class Thread;

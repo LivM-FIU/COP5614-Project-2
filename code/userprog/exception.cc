@@ -280,6 +280,67 @@ int doExec(char *filename)
     return pcb->pid;
 }
 
+int doJoin(int childPID)
+{
+    PCB *child = pcbManager->GetPCBByPID(childPID);
+    PCB *self = currentThread->space->pcb;
+
+    if (!child || child->parent != self)
+    {
+        printf("Join Error: PID [%d] is not a child of current process.\n", childPID);
+        return -1;
+    }
+
+    // Wait until child finishes
+    while (!child->isExited)
+    {
+        currentThread->Yield();
+    }
+
+    return child->exitCode; // Return child's exit status
+}
+
+int doKill(int victimPID)
+{
+    PCB *victim = pcbManager->GetPCBByPID(victimPID);
+
+    if (!victim)
+    {
+        printf("Kill Error: Process with PID [%d] does not exist.\n", victimPID);
+        return -1;
+    }
+
+    if (victim->thread == currentThread)
+    {
+        doExit(-1); // Self-terminate
+        return 0;
+    }
+
+    // Remove from parent's child list
+    if (victim->parent)
+    {
+        victim->parent->children->RemoveItem((void *)victim);
+    }
+
+    // Disconnect children
+    for (int i = 0; i < victim->children->NumInList(); ++i)
+    {
+        PCB *child = (PCB *)victim->children->Remove();
+        if (child) child->parent = nullptr;
+    }
+
+    pcbManager->DeallocatePCB(victim);
+    memoryManager->FreePages(victim->thread->space);
+    delete victim->thread->space;
+
+    // Remove thread from scheduler
+    scheduler->Kill(victim->thread); // You'll have to implement this if not present
+
+    return 0;
+}
+
+
+
 
 char *translate(int virtAddr)
 {
