@@ -205,7 +205,7 @@ int doExec(char *filename)
     // 8. Initialize registers for the new program
     space->InitRegisters();
 
-    printf("Exec Program: [%d] loading [%s]\n", oldPCB->getID(), filename);
+    printf("Exec Program: [%d] loading [%s]\n", pcb->getID(), filename);
 
 
     // 9. Load the page table into the MMU
