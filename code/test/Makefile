@@ -90,8 +90,8 @@ matmult: matmult.o start.o
 	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
 	../bin/coff2noff matmult.coff matmult
 
-memory.o: memory.c
-	$(CC) $(CFLAGS) memory.c
-memory: memory.o start.o
-	$(LD) $(LDFLAGS) start.o memory.o -o memory.coff
-	../bin/coff2noff memory.coff memory 
+# memory.o: memory.c
+# 	$(CC) $(CFLAGS) memory.c
+# memory: memory.o start.o
+# 	$(LD) $(LDFLAGS) start.o memory.o -o memory.coff
+# 	../bin/coff2noff memory.coff memory 
