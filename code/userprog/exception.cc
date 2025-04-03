@@ -243,18 +243,16 @@ int doJoin(int pid)
 
 int doKill(int pid)
 {
-    PCB *victimPCB = pcbManager->GetPCB(pid);
+    PCB* victimPCB = pcbManager->GetPCB(pid);
 
     // Step 1: Validate PID
-    if (victimPCB == NULL)
-    {
+    if (victimPCB == NULL) {
         printf("Kill Error: Invalid PID [%d]\n", pid);
         return -1;
     }
 
     // Step 2: If the current thread is being killed, just call doExit
-    if (victimPCB == currentThread->space->pcb)
-    {
+    if (victimPCB == currentThread->space->pcb) {
         printf("Kill Info: Process [%d] is self; calling doExit(0)\n", pid);
         doExit(0);
         return 0;
@@ -263,8 +261,7 @@ int doKill(int pid)
     printf("System Call: [%d] invoked Kill on [%d]\n", currentThread->space->pcb->pid, pid);
 
     // Step 3: Remove from parent's children list if parent exists
-    if (victimPCB->parent != NULL)
-    {
+    if (victimPCB->parent != NULL) {
         victimPCB->parent->RemoveChild(victimPCB);
     }
 
@@ -275,35 +272,20 @@ int doKill(int pid)
     delete victimPCB->thread->space;
 
     // Step 6: Remove thread from ready list or mark to be destroyed
-    if (victimPCB->thread == currentThread)
-    {
+    if (victimPCB->thread == currentThread) {
         threadToBeDestroyed = currentThread;
-    }
-    else
-    {
+    } else {
         scheduler->RemoveThread(victimPCB->thread);
         delete victimPCB->thread;
     }
-<<<<<<< HEAD
-    //
-=======
 
-<<<<<<< HEAD
-    pcbManager->DeallocatePCB(victim);
-    mm->FreePages(victim->thread->space);
-    delete victim->thread->space;
-
-    // Remove thread from scheduler
-    scheduler->Kill(victim->thread); // You'll have to implement this if not present
-=======
->>>>>>> ffcda1b0f40b76e67a206ad80b1df192ff594117
     // Step 7: Deallocate PCB
     pcbManager->DeallocatePCB(victimPCB);
->>>>>>> 50ea8a8dc39c68f86083c13dd09f2ea52799cd89
 
     // Step 8: Return success
     return 0;
 }
+
 
 void doYield()
 {
