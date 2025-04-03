@@ -31,11 +31,11 @@ CC = $(GCCDIR)gcc -B../../../gnu-decstation-ultrix/
 AS = $(GCCDIR)as
 LD = $(GCCDIR)ld
 
-CPP = gcc -E
+CPP = gcc -m32 -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt shell matmult sort fork join kill exec memory
+all: halt shell matmult sort fork join kill exec 
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
@@ -90,8 +90,8 @@ matmult: matmult.o start.o
 	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
 	../bin/coff2noff matmult.coff matmult
 
-# memory.o: memory.c
-# 	$(CC) $(CFLAGS) memory.c
-# memory: memory.o start.o
-# 	$(LD) $(LDFLAGS) start.o memory.o -o memory.coff
-# 	../bin/coff2noff memory.coff memory 
+memory.o: memory.c
+	$(CC) $(CFLAGS) memory.c
+memory: memory.o start.o
+	$(LD) $(LDFLAGS) start.o memory.o -o memory.coff
+	../bin/coff2noff memory.coff memory 
