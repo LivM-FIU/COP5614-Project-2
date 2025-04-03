@@ -8,7 +8,7 @@
 # of liability and disclaimer of warranty provisions.
 
 DEFINES = -DTHREADS  #-DHW1_ELEVATOR -DHW1_LOCKS -DHW1_SEMAPHORES
-INCPATH = -I../userprog -I../threads -I../machine
+INCPATH = -I../filesys -I../userprog -I../threads -I../machine
 HFILES = $(THREAD_H)
 CFILES = $(THREAD_C)
 C_OFILES = $(THREAD_O)
