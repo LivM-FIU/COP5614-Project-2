@@ -25,6 +25,7 @@
 #include "system.h"
 #include "syscall.h"
 #include "machine.h"
+#include "thread.h"
 
 //----------------------------------------------------------------------
 // ExceptionHandler
