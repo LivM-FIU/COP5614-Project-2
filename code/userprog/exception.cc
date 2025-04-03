@@ -331,7 +331,7 @@ int doKill(int victimPID)
     }
 
     pcbManager->DeallocatePCB(victim);
-    memoryManager->FreePages(victim->thread->space);
+    mm->FreePages(victim->thread->space);
     delete victim->thread->space;
 
     // Remove thread from scheduler
