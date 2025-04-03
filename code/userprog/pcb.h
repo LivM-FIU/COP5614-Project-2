@@ -6,7 +6,6 @@
 
 class Thread;
 class PCBManager;
-extern PCBManager* pcbManager;
 
 class PCB {
 
