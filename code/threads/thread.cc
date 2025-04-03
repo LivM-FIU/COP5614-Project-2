@@ -318,14 +318,4 @@ Thread::RestoreUserState()
 	machine->WriteRegister(i, userRegisters[i]);
 }
 
-void Thread::SetUserRegister(int regNum, int value) {
-    ASSERT(regNum >= 0 && regNum < NumTotalRegs);
-    userRegisters[regNum] = value;
-}
-
-int Thread::GetUserRegister(int regNum) {
-    ASSERT(regNum >= 0 && regNum < NumTotalRegs);
-    return userRegisters[regNum];
-}
-
 #endif
