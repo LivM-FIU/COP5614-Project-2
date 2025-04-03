@@ -284,9 +284,22 @@ int doKill(int pid)
         scheduler->RemoveThread(victimPCB->thread);
         delete victimPCB->thread;
     }
+<<<<<<< HEAD
     //
+=======
+
+<<<<<<< HEAD
+    pcbManager->DeallocatePCB(victim);
+    mm->FreePages(victim->thread->space);
+    delete victim->thread->space;
+
+    // Remove thread from scheduler
+    scheduler->Kill(victim->thread); // You'll have to implement this if not present
+=======
+>>>>>>> ffcda1b0f40b76e67a206ad80b1df192ff594117
     // Step 7: Deallocate PCB
     pcbManager->DeallocatePCB(victimPCB);
+>>>>>>> 50ea8a8dc39c68f86083c13dd09f2ea52799cd89
 
     // Step 8: Return success
     return 0;
