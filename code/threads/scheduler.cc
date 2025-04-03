@@ -21,7 +21,6 @@
 #include "copyright.h"
 #include "scheduler.h"
 #include "system.h"
-#include "../userprog/addrspace.h"
 
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
@@ -146,4 +145,8 @@ Scheduler::Print()
 {
     printf("Ready list contents:\n");
     readyList->Mapcar((VoidFunctionPtr) ThreadPrint);
+}
+
+int Scheduler::RemoveThread(Thread* thread) {
+    return readyList->RemoveItem(thread);
 }
