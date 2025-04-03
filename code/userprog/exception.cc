@@ -51,31 +51,37 @@
 
 void doExit(int status)
 {
-
-    int pid = 99;
+    PCB *pcb = currentThread->space->pcb;
+    int pid = pcb->pid;
 
     printf("System Call: [%d] invoked [Exit]\n", pid);
     printf("Process [%d] exits with [%d]\n", pid, status);
 
-    currentThread->space->pcb->exitStatus = status;
+    // Mark process as exited
+    pcb->exitStatus = status;
 
-    // Manage PCB memory As a parent process
-    PCB *pcb = currentThread->space->pcb;
+    // Remove from parent-child relationships
+    if (pcb->parent != NULL)
+    {
+        pcb->parent->RemoveChild(pcb);
+    }
 
-    // Delete exited children and set parent null for non-exited ones
+    // Clean up children: delete exited children, nullify parent in others
     pcb->DeleteExitedChildrenSetParentNull();
 
-    // Manage PCB memory As a child process
+    // If it has no parent, free the PCB now
     if (pcb->parent == NULL)
+    {
         pcbManager->DeallocatePCB(pcb);
+    }
 
-    // Delete address space only after use is completed
+    // Clean up address space (which includes PCB pointer)
     delete currentThread->space;
 
-    // Finish current thread only after all the cleanup is done
-    // because currentThread marks itself to be destroyed (by a different thread)
-    // and then puts itself to sleep -- thus anything after this statement will not be executed!
+    // Finish thread
     currentThread->Finish();
+
+    // NOTE: Nothing after this line will execute
 }
 
 void incrementPC()
@@ -155,49 +161,52 @@ int doFork(int functionAddr)
 
 int doExec(char *filename)
 {
+    printf("System Call: [%d] invoked Exec on [%s]\n", currentThread->space->pcb->pid, filename);
 
-    // Use progtest.cc:StartProcess() as a guide
+    // 1. Open the executable file
+    OpenFile *executable = fileSystem->Open(filename);
+    AddrSpace *space;
 
-    // 1. Open the file and check validity
-    // OpenFile *executable = fileSystem->Open(filename);
-    // AddrSpace *space;
+    if (executable == NULL)
+    {
+        printf("Exec Error: Unable to open file %s\n", filename);
+        return -1;
+    }
 
-    // if (executable == NULL) {
-    //     printf("Unable to open file %s\n", filename);
-    //     return -1;
-    // }
+    // 2. Save the existing PCB before replacing the address space
+    PCB *pcb = currentThread->space->pcb;
+    delete currentThread->space;
 
-    // 2. Delete current address space but store current PCB first if using in Step 5.
-    // PCB* pcb = currentThread->space->pcb;
-    // delete currentThread->space;
+    // 3. Create a new address space
+    space = new AddrSpace(executable);
 
-    // 3. Create new address space
-    // space = new AddrSpace(executable);
+    // 4. Close the executable file
+    delete executable;
 
-    // 4.     delete executable;			// close file
+    // 5. Check if address space creation succeeded
+    if (!space->valid)
+    {
+        printf("Exec Error: Could not create address space for file %s\n", filename);
+        return -1;
+    }
 
-    // 5. Check if Addrspace creation was successful
-    // if(space->valid != true) {
-    // printf("Could not create AddrSpace\n");
-    //     return -1;
-    // }
+    // 6. Reuse the existing PCB
+    space->pcb = pcb;
 
-    // 6. Set the PCB for the new addrspace - reused from deleted address space
-    // space->pcb = pcb;
+    // 7. Set the new address space for the current thread
+    currentThread->space = space;
 
-    // 7. Set the addrspace for currentThread
-    // currentThread->space = space;
+    // 8. Initialize registers for the new program
+    space->InitRegisters();
 
-    // 8. Initialize registers for new addrspace
-    //  space->InitRegisters();		// set the initial register values
+    // 9. Load the page table into the MMU
+    space->RestoreState();
 
-    // 9. Initialize the page table
-    // space->RestoreState();		// load page table register
+    // 10. Begin execution of the new program
+    machine->Run();
 
-    // 10. Run the machine now that all is set up
-    // machine->Run();			// jump to the user progam
-    // ASSERT(FALSE); // Execution nevere reaches here
-
+    // This line should never be reached unless something fails inside Run()
+    ASSERT(FALSE);
     return 0;
 }
 
