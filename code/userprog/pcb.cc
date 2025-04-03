@@ -1,4 +1,7 @@
 #include "pcb.h"
+#include "system.h"
+
+extern PCBManager* pcbManager;
 
 PCB::PCB(int id)
 {
