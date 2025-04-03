@@ -124,6 +124,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
 			noffH.initData.virtualAddr, noffH.initData.size);
         ReadFile(executable, noffH.initData.inFileAddr, noffH.initData.virtualAddr, noffH.initData.size);
     }
+    printf("Loaded Program: [%d] code | [%d] data | [%d] bss\n", 
+    noffH.code.size, noffH.initData.size, noffH.uninitData.size);
     valid = true;
 }
 
@@ -163,7 +165,7 @@ AddrSpace::AddrSpace(AddrSpace* space) {
 
     // 2. Check if there is enough free memory to make the copy. IF not, fail
     ASSERT(n <= mm->GetFreePageCount());
-    // Change this to informiing caller that constructor failed using valid=false;
+    // Change this to informing caller that constructor failed using valid=false;
 
     // 3. Create a new pagetable of same size as source addr space
     pageTable = new TranslationEntry[n];
