@@ -1,28 +1,31 @@
-
 #ifndef PCB_H
 #define PCB_H
 
 #include "list.h"
-#include "synch.h"
-#include "thread.h"
+#include "pcbmanager.h"
 
 class Thread;
+class PCBManager;
+extern PCBManager* pcbManager;
 
-
-class PCB{
+class PCB {
 
     public:
-        PCB(int pid);
+        PCB(int id);
         ~PCB();
         int pid;
         PCB* parent;
-        List* children;
         Thread* thread;
-    
-    private:
+        int exitStatus;
+
         void AddChild(PCB* pcb);
         int RemoveChild(PCB* pcb);
+        bool HasExited();
+        void DeleteExitedChildrenSetParentNull();
+
+    private:
+        List* children;
+
 };
 
-
-#endif
+#endif // PCB_H
