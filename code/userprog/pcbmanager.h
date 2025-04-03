@@ -19,6 +19,7 @@ class PCBManager{
         BitMap* bitmap;
         PCB** pcbs;
         Lock* pcbManagerLock;
+        int maxProcesses; 
 };
 
 #endif
