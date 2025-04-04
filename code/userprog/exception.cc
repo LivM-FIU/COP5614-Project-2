@@ -159,7 +159,7 @@ int doFork(int functionAddr)
     currentThread->RestoreUserState();
 
     // Step 8: Fork the child thread
-    childThread->Fork((VoidFunctionPtr)childFunction, childPCB->pid);
+    childThread->Fork((VoidFunctionPtr)childFunction, 0);
 
     DEBUG('t', "Fork: Created child process with PID %d\n", childPCB->pid);
     return childPCB->pid;
