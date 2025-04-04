@@ -104,27 +104,30 @@ void childFunction(int pid)
 int doFork(int functionAddr)
 {
     // Step 1: Check for sufficient memory
-    if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
+    if (currentThread->space->GetNumPages() > mm->GetFreePageCount())
+    {
         return -1; // Not enough memory
     }
 
     // Step 2: Save parent user register state
     currentThread->SaveUserState();
 
-    // Step 3: Create new address space for child (copy constructor)
+    // Step 3: Create new address space (copy constructor)
     AddrSpace *childAddrSpace = new AddrSpace(currentThread->space);
-    if (!childAddrSpace->valid) {
+    if (!childAddrSpace->valid)
+    {
         delete childAddrSpace;
         return -1;
     }
 
-    // Step 4: Create child thread
+    // Step 4: Create new thread for child
     Thread *childThread = new Thread("childThread");
     childThread->space = childAddrSpace;
 
-    // Step 5: Allocate and link PCB
+    // Step 5: Create and link PCB
     PCB *childPCB = pcbManager->AllocatePCB();
-    if (childPCB == NULL) {
+    if (childPCB == NULL)
+    {
         delete childThread;
         delete childAddrSpace;
         return -1;
@@ -135,25 +138,31 @@ int doFork(int functionAddr)
     currentThread->space->pcb->AddChild(childPCB);
     childAddrSpace->pcb = childPCB;
 
-    // Step 6: Initialize and customize child's user registers
-    childAddrSpace->InitRegisters();
-    childAddrSpace->RestoreState();
+    // Step 6: Setup child's registers
+    childThread->SaveUserState();        // Saves default 0s; we overwrite key registers next
+    childThread->space->InitRegisters(); // sets PC, Stack, etc.
+    childThread->space->RestoreState();
 
-    machine->WriteRegister(2, 0);         // Child's return value should be 0
-    childThread->SaveUserState();         // Save initialized registers to child
+    machine->WriteRegister(PCReg, functionAddr);
+    machine->WriteRegister(NextPCReg, functionAddr + 4);
+    machine->WriteRegister(PrevPCReg, functionAddr - 4);
+
+    childThread->SaveUserState(); // save updated regs for when child starts
+
+    // 🔽 INSERT PRINT STATEMENTS BEFORE FORKING 🔽
+    printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
+
+    printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
+           childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
 
     // Step 7: Restore parent state
     currentThread->RestoreUserState();
 
-    // Step 8: Fork the thread, starting at childFunction (machine->Run)
-    childThread->Fork((VoidFunctionPtr)childFunction, 0);
+    // Step 8: Fork the child thread
+    childThread->Fork((VoidFunctionPtr)childFunction, childPCB->pid);
 
-    // Step 9: Log and return to parent
-    printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
-    printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
-           childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
-
-    return childPCB->pid; // Parent gets child's PID
+    DEBUG('t', "Fork: Created child process with PID %d\n", childPCB->pid);
+    return childPCB->pid;
 }
 
 int doExec(char *filename)
@@ -240,18 +249,16 @@ int doJoin(int pid)
 
 int doKill(int pid)
 {
-    PCB *victimPCB = pcbManager->GetPCB(pid);
+    PCB* victimPCB = pcbManager->GetPCB(pid);
 
     // Step 1: Validate PID
-    if (victimPCB == NULL)
-    {
+    if (victimPCB == NULL) {
         printf("Kill Error: Invalid PID [%d]\n", pid);
         return -1;
     }
 
     // Step 2: If the current thread is being killed, just call doExit
-    if (victimPCB == currentThread->space->pcb)
-    {
+    if (victimPCB == currentThread->space->pcb) {
         printf("Kill Info: Process [%d] is self; calling doExit(0)\n", pid);
         doExit(0);
         return 0;
@@ -260,8 +267,7 @@ int doKill(int pid)
     printf("System Call: [%d] invoked Kill on [%d]\n", currentThread->space->pcb->pid, pid);
 
     // Step 3: Remove from parent's children list if parent exists
-    if (victimPCB->parent != NULL)
-    {
+    if (victimPCB->parent != NULL) {
         victimPCB->parent->RemoveChild(victimPCB);
     }
 
@@ -272,12 +278,9 @@ int doKill(int pid)
     delete victimPCB->thread->space;
 
     // Step 6: Remove thread from ready list or mark to be destroyed
-    if (victimPCB->thread == currentThread)
-    {
+    if (victimPCB->thread == currentThread) {
         threadToBeDestroyed = currentThread;
-    }
-    else
-    {
+    } else {
         scheduler->RemoveThread(victimPCB->thread);
         delete victimPCB->thread;
     }
@@ -289,17 +292,10 @@ int doKill(int pid)
     return 0;
 }
 
+
 void doYield()
 {
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);
-    Thread *next = scheduler->FindNextToRun();
-
-    if (next != NULL)
-    {
-        scheduler->ReadyToRun(currentThread);
-        scheduler->Run(next);
-    }
-    interrupt->SetLevel(oldLevel);
+    currentThread->Yield();
 }
 
 // This implementation (discussed in one of the videos) is broken!
