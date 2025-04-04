@@ -296,6 +296,7 @@ int doKill(int pid)
 void doYield()
 {
     DEBUG('t', "System Call: [%d] invoked Yield.\n", currentThread->space->pcb->pid);
+    printf('t', "System Call: [%d] invoked Yield.\n", currentThread->space->pcb->pid);
     currentThread->Yield();
 }
 
