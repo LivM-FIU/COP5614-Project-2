@@ -129,10 +129,9 @@ int doFork(int functionAddr)
     currentThread->space->pcb->AddChild(childPCB);
     childAddrSpace->pcb = childPCB;
 
-    // Copy parent's register state into child
-    childThread->SaveUserState();
+    // Save parent’s register state into the child
     childThread->CopyUserRegistersFrom(currentThread);
-    childThread->SetUserRegister(2, 0); // return value for child
+    childThread->SetUserRegister(2, 0); // 👈 child should see Fork() return 0
     childThread->SetUserRegister(PCReg, functionAddr);
     childThread->SetUserRegister(NextPCReg, functionAddr + 4);
 
@@ -140,17 +139,16 @@ int doFork(int functionAddr)
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
            childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
 
-    currentThread->RestoreUserState(); // resume parent state
+    currentThread->RestoreUserState(); // restore parent's context
 
-    // ✅ Let child resume from saved user state — not call any C++ function
+    // ⬇️ child jumps into user mode with restored state
     childThread->Fork([](int) {
         currentThread->space->RestoreState();
         currentThread->RestoreUserState();
-        machine->Run(); // child resumes in user code
+        machine->Run(); // child resumes from user code
     }, 0);
 
-    machine->WriteRegister(2, childPCB->pid); // return PID to parent
-    return childPCB->pid;
+    return childPCB->pid; // parent sees PID of child
 }
 
 int doExec(char *filename)
