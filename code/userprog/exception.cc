@@ -109,7 +109,8 @@ int doFork(int functionAddr)
     currentThread->SaveUserState();
 
     AddrSpace *childAddrSpace = new AddrSpace(currentThread->space);
-    if (!childAddrSpace->valid) {
+    if (!childAddrSpace->valid)
+    {
         delete childAddrSpace;
         return -1;
     }
@@ -118,7 +119,8 @@ int doFork(int functionAddr)
     childThread->space = childAddrSpace;
 
     PCB *childPCB = pcbManager->AllocatePCB();
-    if (childPCB == NULL) {
+    if (childPCB == NULL)
+    {
         delete childThread;
         delete childAddrSpace;
         return -1;
@@ -142,11 +144,13 @@ int doFork(int functionAddr)
     currentThread->RestoreUserState(); // restore parent's context
 
     // ⬇️ child jumps into user mode with restored state
-    childThread->Fork([](int) {
-        currentThread->space->RestoreState();
-        currentThread->RestoreUserState();
-        machine->Run(); // child resumes from user code
-    }, 0);
+    childThread->Fork([](int)
+                      {
+                          currentThread->space->RestoreState();
+                          currentThread->RestoreUserState();
+                          machine->Run(); // child resumes from user code
+                      },
+                      0);
 
     return childPCB->pid; // parent sees PID of child
 }
@@ -166,7 +170,17 @@ int doExec(char *filename)
     }
 
     // 2. Save the existing PCB before replacing the address space
-    PCB *pcb = currentThread->space->pcb;
+    PCB *pcb = currentThread->space ? currentThread->space->pcb : nullptr;
+    if (pcb == nullptr)
+    {
+        pcb = pcbManager->AllocatePCB();
+        if (pcb == nullptr)
+        {
+            delete executable;
+            return -1;
+        }
+        pcb->thread = currentThread;
+    }
     delete currentThread->space;
 
     // 3. Create a new address space
