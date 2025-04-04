@@ -318,13 +318,13 @@ Thread::RestoreUserState()
 	machine->WriteRegister(i, userRegisters[i]);
 }
 
-void CopyUserRegistersFrom(Thread* parent) {
+void Thread::CopyUserRegistersFrom(Thread* parent) {
     for (int i = 0; i < NumTotalRegs; i++) {
         userRegisters[i] = parent->userRegisters[i];
     }
 }
 
-void SetUserRegister(int reg, int value) {
+void Thread::SetUserRegister(int reg, int value) {
     if (reg >= 0 && reg < NumTotalRegs)
         userRegisters[reg] = value;
 }

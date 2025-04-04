@@ -125,7 +125,9 @@ class Thread {
   public:
     void SaveUserState();		// save user-level register state
     void RestoreUserState();		// restore user-level register state
- 
+    void CopyUserRegistersFrom(Thread* parent);
+    void SetUserRegister(int reg, int value);
+
     AddrSpace *space;			// User code this thread is running.
 #endif
 };
