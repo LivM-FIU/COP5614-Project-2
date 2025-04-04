@@ -137,8 +137,8 @@ int doFork(int functionAddr)
     childThread->space->RestoreState();
 
     // Overwrite return value for child to 0
-    childThread->SaveUserState();
-    childThread->userRegisters[2] = 0; // r2 is the return value register
+    machine->WriteRegister(2, 0); // Set return value to 0 for child
+    childThread->SaveUserState(); // Now save updated registers into the child
 
     // Parent gets child PID
     int returnValToParent = childPCB->pid;
