@@ -106,12 +106,10 @@ int doFork(int functionAddr)
     if (currentThread->space->GetNumPages() > mm->GetFreePageCount())
         return -1;
 
-    // Save current thread's state
     currentThread->SaveUserState();
 
     AddrSpace *childAddrSpace = new AddrSpace(currentThread->space);
-    if (!childAddrSpace->valid)
-    {
+    if (!childAddrSpace->valid) {
         delete childAddrSpace;
         return -1;
     }
@@ -120,8 +118,7 @@ int doFork(int functionAddr)
     childThread->space = childAddrSpace;
 
     PCB *childPCB = pcbManager->AllocatePCB();
-    if (childPCB == NULL)
-    {
+    if (childPCB == NULL) {
         delete childThread;
         delete childAddrSpace;
         return -1;
@@ -132,29 +129,28 @@ int doFork(int functionAddr)
     currentThread->space->pcb->AddChild(childPCB);
     childAddrSpace->pcb = childPCB;
 
-    // Set up registers for child
-    childThread->space->InitRegisters();
-    childThread->space->RestoreState();
-
-    // Copy parent's registers to child, then set r2 = 0
-    childThread->SaveUserState(); // Save blank first
-
+    // Copy parent's register state into child
+    childThread->SaveUserState();
     childThread->CopyUserRegistersFrom(currentThread);
-    childThread->SetUserRegister(2, 0); // r2 = return value for child
+    childThread->SetUserRegister(2, 0); // return value for child
     childThread->SetUserRegister(PCReg, functionAddr);
     childThread->SetUserRegister(NextPCReg, functionAddr + 4);
-    
 
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
            childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
 
-    // Fork and run
-    currentThread->RestoreUserState(); // parent state
-    childThread->Fork((VoidFunctionPtr)childFunction, 0);
-    machine->WriteRegister(2, childPCB->pid);
+    currentThread->RestoreUserState(); // resume parent state
 
-    return childPCB->pid; // return PID to parent
+    // ✅ Let child resume from saved user state — not call any C++ function
+    childThread->Fork([](int) {
+        currentThread->space->RestoreState();
+        currentThread->RestoreUserState();
+        machine->Run(); // child resumes in user code
+    }, 0);
+
+    machine->WriteRegister(2, childPCB->pid); // return PID to parent
+    return childPCB->pid;
 }
 
 int doExec(char *filename)
