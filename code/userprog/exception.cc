@@ -295,9 +295,15 @@ int doKill(int pid)
 
 void doYield()
 {
-    currentThread->Yield();
-}
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    Thread *next = scheduler->FindNextToRun();
 
+    if (next != NULL) {
+        scheduler->ReadyToRun(currentThread);
+        scheduler->Run(next);
+    }
+    interrupt->SetLevel(oldLevel);
+}
 // This implementation (discussed in one of the videos) is broken!
 // Try and figure out why.
 // char *readString1(int virtAddr)
