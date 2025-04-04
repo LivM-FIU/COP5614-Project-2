@@ -103,25 +103,28 @@ void childFunction(int pid)
 
 int doFork(int functionAddr)
 {
-    // Check memory
-    if (currentThread->space->GetNumPages() > mm->GetFreePageCount())
-        return -1;
+    // Step 1: Check for sufficient memory
+    if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
+        return -1; // Not enough memory
+    }
 
+    // Step 2: Save parent user register state
     currentThread->SaveUserState();
 
+    // Step 3: Create new address space for child (copy constructor)
     AddrSpace *childAddrSpace = new AddrSpace(currentThread->space);
-    if (!childAddrSpace->valid)
-    {
+    if (!childAddrSpace->valid) {
         delete childAddrSpace;
         return -1;
     }
 
+    // Step 4: Create child thread
     Thread *childThread = new Thread("childThread");
     childThread->space = childAddrSpace;
 
+    // Step 5: Allocate and link PCB
     PCB *childPCB = pcbManager->AllocatePCB();
-    if (childPCB == NULL)
-    {
+    if (childPCB == NULL) {
         delete childThread;
         delete childAddrSpace;
         return -1;
@@ -132,24 +135,25 @@ int doFork(int functionAddr)
     currentThread->space->pcb->AddChild(childPCB);
     childAddrSpace->pcb = childPCB;
 
-    // Child's registers
-    childThread->space->InitRegisters();
-    childThread->space->RestoreState();
+    // Step 6: Initialize and customize child's user registers
+    childAddrSpace->InitRegisters();
+    childAddrSpace->RestoreState();
 
-    childThread->SaveUserState(); // Now save updated registers into the child
+    machine->WriteRegister(2, 0);         // Child's return value should be 0
+    childThread->SaveUserState();         // Save initialized registers to child
 
-    machine->WriteRegister(2, 0); // Set return value to 0 for child
-
-    // Parent gets child PID
-    int returnValToParent = childPCB->pid;
-
+    // Step 7: Restore parent state
     currentThread->RestoreUserState();
 
-    // Fork child
+    // Step 8: Fork the thread, starting at childFunction (machine->Run)
     childThread->Fork((VoidFunctionPtr)childFunction, 0);
 
-    DEBUG('t', "Fork: Created child process with PID %d\n", childPCB->pid);
-    return returnValToParent;
+    // Step 9: Log and return to parent
+    printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
+    printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
+           childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
+
+    return childPCB->pid; // Parent gets child's PID
 }
 
 int doExec(char *filename)
