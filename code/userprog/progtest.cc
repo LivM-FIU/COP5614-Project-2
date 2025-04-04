@@ -30,7 +30,18 @@ StartProcess(char *filename)
 	printf("Unable to open file %s\n", filename);
 	return;
     }
-    space = new AddrSpace(executable);    
+    space = new AddrSpace(executable); 
+    
+    PCB *pcb = pcbManager->AllocatePCB();
+    if (pcb == nullptr) {
+        delete executable;
+        delete space;
+        printf("Failed to allocate PCB for user process.\n");
+        return;
+    }
+    pcb->thread = currentThread;
+    space->pcb = pcb;
+    
     currentThread->space = space;
 
     delete executable;			// close file
