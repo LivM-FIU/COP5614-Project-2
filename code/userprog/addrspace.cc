@@ -99,7 +99,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 					numPages, size);
 // first, set up the translation
     pageTable = new TranslationEntry[numPages];
-    for (unsigned i = 0; i < numPages; i++) {
+    for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
         pageTable[i].physicalPage = mm->AllocatePage();
         pageTable[i].valid = TRUE;
