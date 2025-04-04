@@ -143,7 +143,7 @@ int doFork(int functionAddr)
     currentThread->RestoreUserState();
 
     // Fork child
-    childThread->Fork((VoidFunctionPtr)childFunction, 0);
+    childThread->Fork((VoidFunctionPtr)childFunction, 1);
 
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
