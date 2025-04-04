@@ -44,7 +44,7 @@ int PCBManager::DeallocatePCB(PCB *pcb)
     int pid = pcb->pid;
 
     // Validate PCB
-    if (pid < 0 || pid >= maxCount) return -1;
+    if (pid < 0 || pid >= maxProcesses) return -1;
 
     pcbManagerLock->Acquire();  
 
@@ -64,7 +64,7 @@ int PCBManager::DeallocatePCB(PCB *pcb)
 
 PCB* PCBManager::GetPCB(int pid)
 {
-    if (pid < 0 || pid >= maxCount) return NULL;
+    if (pid < 0 || pid >= maxProcesses) return NULL;
 
     pcbManagerLock->Acquire();
     PCB* pcb = pcbs[pid];
