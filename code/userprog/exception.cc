@@ -138,15 +138,12 @@ int doFork(int functionAddr)
 
     // Copy parent's registers to child, then set r2 = 0
     childThread->SaveUserState(); // Save blank first
-    for (int i = 0; i < NumTotalRegs; i++)
-    {
-        childThread->userRegisters[i] = currentThread->userRegisters[i];
-    }
-    childThread->userRegisters[2] = 0; // r2 = return value in child
 
-    // Set PC
-    childThread->userRegisters[PCReg] = functionAddr;
-    childThread->userRegisters[NextPCReg] = functionAddr + 4;
+    childThread->CopyUserRegistersFrom(currentThread);
+    childThread->SetUserRegister(2, 0); // r2 = return value for child
+    childThread->SetUserRegister(PCReg, functionAddr);
+    childThread->SetUserRegister(NextPCReg, functionAddr + 4);
+    
 
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
