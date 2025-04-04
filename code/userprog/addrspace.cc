@@ -73,6 +73,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 
     if(noffH.noffMagic != NOFFMAGIC) {
+        printf("AddrSpace: Invalid NOFF header.\n");
         valid = false;
         return;
     }
@@ -85,6 +86,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     size = numPages * PageSize;
 
     if(numPages > mm->GetFreePageCount()) {
+        printf("AddrSpace: Not enough memory. Required pages: %d\n", numPages);
         valid = false;
         return;
     }
@@ -97,7 +99,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 					numPages, size);
 // first, set up the translation
     pageTable = new TranslationEntry[numPages];
-    for (i = 0; i < numPages; i++) {
+    for (unsigned i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
         pageTable[i].physicalPage = mm->AllocatePage();
         pageTable[i].valid = TRUE;
