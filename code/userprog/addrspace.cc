@@ -202,9 +202,13 @@ AddrSpace::AddrSpace(AddrSpace* space) {
 // 	Dealloate an address space.  Nothing for now!
 //----------------------------------------------------------------------
 
-AddrSpace::~AddrSpace()
-{
-   delete pageTable;
+AddrSpace::~AddrSpace() {
+    for (unsigned int i = 0; i < numPages; i++) {
+        if (pageTable[i].valid) {
+            mm->DeAllocatePage(pageTable[i].physicalPage);
+        }
+    }
+    delete[] pageTable;
 }
 
 //----------------------------------------------------------------------
