@@ -300,18 +300,18 @@ void doYield()
 
 // This implementation (discussed in one of the videos) is broken!
 // Try and figure out why.
-char *readString1(int virtAddr)
-{
+// char *readString1(int virtAddr)
+// {
 
-    unsigned int pageNumber = virtAddr / 128;
-    unsigned int pageOffset = virtAddr % 128;
-    unsigned int frameNumber = machine->pageTable[pageNumber].physicalPage;
-    unsigned int physicalAddr = frameNumber * 128 + pageOffset;
+//     unsigned int pageNumber = virtAddr / 128;
+//     unsigned int pageOffset = virtAddr % 128;
+//     unsigned int frameNumber = machine->pageTable[pageNumber].physicalPage;
+//     unsigned int physicalAddr = frameNumber * 128 + pageOffset;
 
-    char *string = &(machine->mainMemory[physicalAddr]);
+//     char *string = &(machine->mainMemory[physicalAddr]);
 
-    return string;
-}
+//     return string;
+// }
 
 // This implementation is correct!
 // perform MMU translation to access physical memory

@@ -19,10 +19,11 @@
 #include "system.h"
 #include "addrspace.h"
 #include "noff.h"
+// #include "machine.h"
 #ifdef HOST_SPARC
 #include <strings.h>
 #endif
-#include <machine.h>
+
 
 //----------------------------------------------------------------------
 // SwapHeader
