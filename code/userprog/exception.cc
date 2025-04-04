@@ -152,6 +152,7 @@ int doFork(int functionAddr)
     // Fork and run
     currentThread->RestoreUserState(); // parent state
     childThread->Fork((VoidFunctionPtr)childFunction, 0);
+    machine->WriteRegister(2, childPCB->pid);
 
     return childPCB->pid; // return PID to parent
 }
