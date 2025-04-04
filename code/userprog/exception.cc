@@ -292,7 +292,6 @@ int doKill(int pid)
     return 0;
 }
 
-
 void doYield()
 {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
@@ -304,6 +303,7 @@ void doYield()
     }
     interrupt->SetLevel(oldLevel);
 }
+
 // This implementation (discussed in one of the videos) is broken!
 // Try and figure out why.
 // char *readString1(int virtAddr)

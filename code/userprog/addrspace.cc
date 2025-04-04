@@ -23,6 +23,7 @@
 #ifdef HOST_SPARC
 #include <strings.h>
 #endif
+#include <machine.h>
 
 
 //----------------------------------------------------------------------
