@@ -103,31 +103,28 @@ void childFunction(int pid)
 
 int doFork(int functionAddr)
 {
-    // Step 1: Check for sufficient memory
-    if (currentThread->space->GetNumPages() > mm->GetFreePageCount())
-    {
-        return -1; // Not enough memory
+    // Step 1: Check if enough memory
+    if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
+        return -1;
     }
 
-    // Step 2: Save parent user register state
+    // Step 2: Save parent's user register state
     currentThread->SaveUserState();
 
-    // Step 3: Create new address space (deep copy)
-    AddrSpace *childAddrSpace = new AddrSpace(currentThread->space);
-    if (!childAddrSpace->valid)
-    {
+    // Step 3: Deep copy of the parent address space
+    AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
+    if (!childAddrSpace->valid) {
         delete childAddrSpace;
         return -1;
     }
 
-    // Step 4: Create new thread for child
-    Thread *childThread = new Thread("childThread");
+    // Step 4: Create child thread
+    Thread* childThread = new Thread("childThread");
     childThread->space = childAddrSpace;
 
-    // Step 5: Create and link PCB
-    PCB *childPCB = pcbManager->AllocatePCB();
-    if (childPCB == NULL)
-    {
+    // Step 5: Allocate PCB and link to parent
+    PCB* childPCB = pcbManager->AllocatePCB();
+    if (childPCB == nullptr) {
         delete childThread;
         delete childAddrSpace;
         return -1;
@@ -138,35 +135,30 @@ int doFork(int functionAddr)
     currentThread->space->pcb->AddChild(childPCB);
     childAddrSpace->pcb = childPCB;
 
-    // Step 6: Copy parent's saved user registers to child
+    // Step 6: Copy parent's registers into child
     childThread->CopyUserRegistersFrom(currentThread);
-
-    // Set child return value of Fork to 0
-    childThread->SetUserRegister(2, 0);
-
-    // Set child's PC and NextPC registers
+    childThread->SetUserRegister(2, 0); // r2 = 0 in child
     childThread->SetUserRegister(PCReg, functionAddr);
     childThread->SetUserRegister(NextPCReg, functionAddr + 4);
     childThread->SetUserRegister(PrevPCReg, functionAddr - 4);
 
-    // 🔽 INSERT PRINT STATEMENTS BEFORE FORKING 🔽
+    // Step 7: Print info
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
-        currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
+           childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
 
-    // Step 7: Fork the child thread
+    // Step 8: Fork the child thread to jump into user mode
     childThread->Fork([](int) {
         currentThread->space->RestoreState();
         currentThread->RestoreUserState();
-        machine->Run(); // Child begins execution in user mode
+        machine->Run(); // never returns
+        ASSERT(FALSE);
     }, 0);
 
-    // Step 8: Restore parent's register state
+    // Step 9: Restore parent's state and return child PID
     currentThread->space->RestoreState();
     currentThread->RestoreUserState();
-
-    // Step 9: Return child's PID to parent
-    return childPCB->pid;
+    return childPCB->pid; // r2 = PID in parent
 }
 
 
