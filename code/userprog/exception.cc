@@ -25,6 +25,8 @@
 #include "system.h"
 #include "syscall.h"
 #include "system.h"
+#include "addrspace.h"
+#include "thread.h"
 
 //----------------------------------------------------------------------
 // ExceptionHandler

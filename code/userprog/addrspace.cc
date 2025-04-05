@@ -207,7 +207,7 @@ AddrSpace::~AddrSpace() {
             mm->DeAllocatePage(pageTable[i].physicalPage);
         }
     }
-    delete[] pageTable;
+    delete pageTable;
 }
 
 //----------------------------------------------------------------------
@@ -270,8 +270,8 @@ void AddrSpace::RestoreState()
 
 // perform MMU translation to access physical memory
 unsigned int AddrSpace::Translate(unsigned int virtualAddr) {
-        unsigned int pageNumber = virtualAddr/PageSize;
-        unsigned int pageOffset = virtualAddr%PageSize;
+        unsigned int pageNumber = virtualAddr / PageSize;
+        unsigned int pageOffset = virtualAddr % PageSize;
         unsigned int frameNumber = pageTable[pageNumber].physicalPage;
         int physicalAddr = frameNumber*PageSize + pageOffset;
         return physicalAddr;
