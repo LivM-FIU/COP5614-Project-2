@@ -350,36 +350,225 @@
 //     ASSERT(false);
 // }
 
+// void doExit(int status) {
+//     PCB* pcb = currentThread->space->pcb;
+//     int pid = pcb->pid;
+
+//     printf("DEBUG: Process %d starting Exit with status %d\n", pid, status);
+//     printf("System Call: [%d] invoked Exit.\n", pid);
+//     printf("Process [%d] exits with [%d]\n", pid, status);
+
+//     pcb->exitStatus = status;
+//     pcb->exited = true;
+
+//     // Wait for any living children to exit
+//     while (pcb->HasAliveChildren()) {
+//         printf("DEBUG: PID %d waiting for alive children to exit...\n", pid);
+//         currentThread->Yield();
+//     }
+
+//     pcb->DeleteExitedChildrenSetParentNull();
+
+//     if (pcb->parent != NULL) {
+//         printf("DEBUG: Signaling parent (PID %d) that child (PID %d) has exited\n",
+//                pcb->parent->pid, pid);
+
+//         if (pcb->parent->thread != NULL) {
+//             scheduler->ReadyToRun(pcb->parent->thread);
+//             printf("DEBUG: Parent thread added to ready queue\n");
+//         }
+
+//         pcb->SignalParent();
+//     } else {
+//         pcbManager->DeallocatePCB(pcb);
+//    }
+
+//     // Clean up address space
+//     delete currentThread->space;
+//     currentThread->space = NULL;
+
+//     // Check if this is the last thread before finishing
+//     Thread* nextThread = scheduler->FindNextToRun();
+//     if (nextThread == NULL) {
+//         printf("DEBUG: No more threads to run, shutting down system\n");
+//         interrupt->Halt();  // Clean shutdown
+//         // Won't reach this point
+//     } else {
+//         printf("DEBUG: Still %d thread(s) in ready queue, finishing normally\n", 
+//                1); // We know there's at least one thread
+//     }
+    
+//     // Normal thread termination
+//     currentThread->Finish();
+
+//     // This point should never be reached
+//     ASSERT(false);
+// }
+// void doExit(int status)
+// {
+//     int pid = currentThread->space->pcb->pid;
+
+//     printf("System Call: [%d] invoked [Exit]\n", pid);
+//     printf("Process [%d] exits with status [%d]\n", pid, status);
+
+//     delete currentThread->space;     // Clean up address space
+//     currentThread->Finish();         // Finish the current thread (will not return)
+// }
+
+// void doExit(int status) {
+
+//     PCB* pcb = currentThread->space->pcb;
+//     int pid = pcb->pid;
+//     printf("DEBUG: doExit called for process with PCB pid = %d\n", pid);
+//     printf("DEBUG: Process %d starting Exit with status %d\n", pid, status);
+//     printf("System Call: [%d] invoked Exit.\n", pid);
+//     printf("Process [%d] exits with [%d]\n", pid, status);
+
+//     // Set exit status and mark as exited
+//     pcb->exitStatus = status;
+//     pcb->exited = true;
+
+//     // Wait for any living children to exit
+//     while (pcb->HasAliveChildren()) {
+//         printf("DEBUG: PID %d waiting for alive children to exit...\n", pid);
+//         currentThread->Yield();
+//     }
+
+//     // Cleanup children PCBs
+//     pcb->DeleteExitedChildrenSetParentNull();
+
+//     // Handle parent notification
+//     if (pcb->parent != NULL) {
+//         printf("DEBUG: Signaling parent (PID %d) that child (PID %d) has exited\n",
+//                pcb->parent->pid, pid);
+
+//         if (pcb->parent->thread != NULL) {
+//             // Let the parent know this child has exited
+//             scheduler->ReadyToRun(pcb->parent->thread);
+//             printf("DEBUG: Parent thread added to ready queue\n");
+//         }
+
+//         pcb->SignalParent();
+//     } else {
+//         // No parent, so deallocate PCB directly
+//         pcbManager->DeallocatePCB(pcb);
+//     }
+
+//     // Clean up address space
+//     delete currentThread->space;
+//     currentThread->space = NULL;
+//     // At the end of doExit(), before calling Finish()
+//     if (pid == 1) {
+//         printf("DEBUG: Main process (PID 1) exiting, about to call interrupt->Halt()\n");
+//         interrupt->Halt();
+// }
+//     // Let Thread::Finish() handle the thread termination and scheduling
+//     // It will check if there are more threads to run and act accordingly
+//     currentThread->Finish();
+
+//     // This point should never be reached
+//     ASSERT(false);
+// }
+
+
+// void doExit(int status) {
+//     PCB* pcb = currentThread->space->pcb;
+//     int pid = pcb->pid;
+
+//     // printf("DEBUG: Process %d starting Exit with status %d\n", pid, status);
+//     // printf("System Call: [%d] invoked Exit.\n", pid);
+//     // printf("Process [%d] exits with [%d]\n", pid, status);
+
+//     // Special case for main process (PID 1) - check this EARLY
+//     if (pid == 1) {
+//         // printf("DEBUG: Main process exiting, halting system\n");
+//         interrupt->Halt();
+//         // Should never reach here
+//     }
+
+//     // Set exit status and mark as exited
+//     pcb->exitStatus = status;
+//     pcb->exited = true;
+
+//     // Wait for any living children to exit
+//     while (pcb->HasAliveChildren()) {
+//         // printf("DEBUG: PID %d waiting for alive children to exit...\n", pid);
+//         currentThread->Yield();
+//     }
+
+//     // Cleanup children PCBs
+//     pcb->DeleteExitedChildrenSetParentNull();
+
+//     // Handle parent notification
+//     if (pcb->parent != NULL) {
+//         // printf("DEBUG: Signaling parent (PID %d) that child (PID %d) has exited\n",pcb->parent->pid, pid);
+//         if (pcb->parent->thread != NULL) {
+//             // Let the parent know this child has exited
+//             scheduler->ReadyToRun(pcb->parent->thread);
+//             printf("DEBUG: Parent thread added to ready queue\n");
+//         }
+
+//         // Signal parent about this child's exit
+//         pcb->SignalParent();
+//     } else {
+//         // No parent, so deallocate PCB directly
+//         pcbManager->DeallocatePCB(pcb);
+//     }
+
+//     // Clean up address space
+//     delete currentThread->space;
+//     currentThread->space = NULL;
+
+//     // Let Thread::Finish() handle the thread termination and scheduling
+//     currentThread->Finish();
+
+//     // This point should never be reached
+//     ASSERT(false);
+// }
+
 void doExit(int status) {
     PCB* pcb = currentThread->space->pcb;
     int pid = pcb->pid;
 
-    printf("DEBUG: Process %d starting Exit with status %d\n", pid, status);
+    // printf("DEBUG: Process %d starting Exit with status %d\n", pid, status);
     printf("System Call: [%d] invoked Exit.\n", pid);
     printf("Process [%d] exits with [%d]\n", pid, status);
 
+    // Special case for main process (PID 1) - check this EARLY
+    if (pid == 1) {
+        // printf("DEBUG: Main process exiting, halting system\n");
+        interrupt->Halt();
+        // Should never reach here
+    }
+
+    // Set exit status and mark as exited
     pcb->exitStatus = status;
     pcb->exited = true;
 
     // Wait for any living children to exit
     while (pcb->HasAliveChildren()) {
-        printf("DEBUG: PID %d waiting for alive children to exit...\n", pid);
+        // printf("DEBUG: PID %d waiting for alive children to exit...\n", pid);
         currentThread->Yield();
     }
 
+    // Cleanup children PCBs
     pcb->DeleteExitedChildrenSetParentNull();
 
+    // Handle parent notification
     if (pcb->parent != NULL) {
-        printf("DEBUG: Signaling parent (PID %d) that child (PID %d) has exited\n",
-               pcb->parent->pid, pid);
+        // printf("DEBUG: Signaling parent (PID %d) that child (PID %d) has exited\n",
+            //    pcb->parent->pid, pid);
 
         if (pcb->parent->thread != NULL) {
+            // Let the parent know this child has exited
             scheduler->ReadyToRun(pcb->parent->thread);
-            printf("DEBUG: Parent thread added to ready queue\n");
+            // printf("DEBUG: Parent thread added to ready queue\n");
         }
 
+        // Signal parent about this child's exit
         pcb->SignalParent();
     } else {
+        // No parent, so deallocate PCB directly
         pcbManager->DeallocatePCB(pcb);
     }
 
@@ -387,23 +576,46 @@ void doExit(int status) {
     delete currentThread->space;
     currentThread->space = NULL;
 
-    // Check if this is the last thread before finishing
-    Thread* nextThread = scheduler->FindNextToRun();
-    if (nextThread == NULL) {
-        printf("DEBUG: No more threads to run, shutting down system\n");
-        interrupt->Halt();  // Clean shutdown
-        // Won't reach this point
-    } else {
-        printf("DEBUG: Still %d thread(s) in ready queue, finishing normally\n", 
-               1); // We know there's at least one thread
-    }
-    
-    // Normal thread termination
+    // Let Thread::Finish() handle the thread termination and scheduling
     currentThread->Finish();
 
     // This point should never be reached
     ASSERT(false);
 }
+
+// void doExit(int status) {
+//     // Get the current process's PCB
+//     PCB* currentPCB = pcbManager->GetPCB(currentThread);
+    
+//     // Set exit status
+//     currentPCB->exitStatus = status;
+    
+//     // Debug output
+//     printf("Process [%d] exits with [%d]\n", currentPCB->pid, status);
+    
+//     // Notify parent if it exists
+//     if (currentPCB->parent != NULL) {
+//         currentPCB->SignalParent();
+//     }
+    
+//     // Deal with any children
+//     currentPCB->DeleteExitedChildrenSetParentNull();
+    
+//     // Free memory used by this process
+//     if (currentThread->space) {
+//         for (int i = 0; i < currentThread->space->GetNumPages(); i++) {
+//             int physPage = currentThread->space->pageTable[i].physicalPage;
+//             if (physPage != -1) {
+//                 memoryManager->FreePage(physPage);
+//             }
+//         }
+//         delete currentThread->space;
+//         currentThread->space = NULL;
+//     }
+    
+//     // Terminate thread (this will not return)
+//     currentThread->Finish();
+// }
 
 void incrementPC() {
     int oldPCReg = machine->ReadRegister(PCReg);
@@ -426,7 +638,7 @@ void incrementPC() {
 //     currentThread->RestoreUserState(); 
 //     currentThread->space->RestoreState(); 
 //     machine->Run(); 
-//correct one
+//
 // // }
 // void childFunction(int pid) {
 //     printf("DEBUG: Child function starting for PID %d\n", pid);
@@ -456,36 +668,123 @@ void incrementPC() {
 //     machine->Run();  
 //     ASSERT(false);
 // }
+// void childFunction(int pid) {
+//     printf("DEBUG: Child function starting for PID %d\n", pid);
+
+//     PCB* pcb = pcbManager->GetPCB(pid);
+//     int functionAddr = pcb->forkStartPC;
+//     printf("DEBUG: functionAddr = 0x%x\n", functionAddr);
+
+//     // Restore machine state for this address space
+//     currentThread->space->RestoreState();
+
+//     // Load saved registers from PCB directly to the machine
+//     for (int i = 0; i < NumTotalRegs; i++) {
+//         machine->WriteRegister(i, pcb->savedRegisters[i]);
+//     }
+    
+//     // Override program counter registers
+//     machine->WriteRegister(PCReg, functionAddr);
+//     machine->WriteRegister(PrevPCReg, functionAddr - 4);
+//     machine->WriteRegister(NextPCReg, functionAddr + 4);
+    
+//     // Set return value for child to 0
+//     machine->WriteRegister(2, 0);
+
+//     printf("DEBUG: Child process %d about to run with PC=0x%x\n", 
+//            pid, machine->ReadRegister(PCReg));
+    
+//     // Run the user code
+//     machine->Run();
+
+//     ASSERT(false);  // Should never reach here
+// }
+// void childFunction(int pid) {
+//     printf("DEBUG: Child function starting for PID %d\n", pid);
+    
+//     // Restore the state of registers (including PC)
+//     currentThread->RestoreUserState();
+    
+//     // Restore the page table for child
+//     currentThread->space->RestoreState();
+    
+//     // Print debug info to verify PC
+//     printf("DEBUG: Child process %d about to run with PC=0x%x\n", 
+//            pid, machine->ReadRegister(PCReg));
+    
+//     // Run the user code
+//     machine->Run();
+    
+//     ASSERT(false);  // Should never reach here
+// }
+
+// void childFunction(int pid) {
+//     printf("DEBUG: Child function starting for PID %d\n", pid);
+
+//     PCB* pcb = pcbManager->GetPCB(pid);
+//     int functionAddr = pcb->forkStartPC;
+    
+//     // Restore the saved registers from PCB
+//     for (int i = 0; i < NumTotalRegs; i++) {
+//         machine->WriteRegister(i, pcb->savedRegisters[i]);
+//     }
+    
+//     // Override program counter registers to point to the function
+//     machine->WriteRegister(PCReg, functionAddr);
+//     machine->WriteRegister(PrevPCReg, functionAddr - 4);
+//     machine->WriteRegister(NextPCReg, functionAddr + 4);
+    
+//     // Set return value for child to 0
+//     machine->WriteRegister(2, 0);
+
+//     printf("DEBUG: Child process %d about to run with PC=0x%x\n", 
+//            pid, machine->ReadRegister(PCReg));
+    
+//     // Restore the address space state
+//     currentThread->space->RestoreState();
+    
+//     // Run the user code
+//     machine->Run();
+    
+//     ASSERT(false);  // Should never reach here
+// }
+
 void childFunction(int pid) {
-    printf("DEBUG: Child function starting for PID %d\n", pid);
+    // printf("DEBUG: Child function starting for PID %d\n", pid);
 
     PCB* pcb = pcbManager->GetPCB(pid);
+    if (!pcb) {
+        printf("ERROR: Invalid PCB for PID %d\n", pid);
+        return;
+    }
+    
     int functionAddr = pcb->forkStartPC;
-    printf("DEBUG: functionAddr = 0x%x\n", functionAddr);
-
-    // Restore machine state for this address space
-    currentThread->space->RestoreState();
-
-    // Load saved registers from PCB directly to the machine
+    // printf("DEBUG: Function address for child: 0x%x\n", functionAddr);
+    
+    // Restore the state from parent, but with modified PC
     for (int i = 0; i < NumTotalRegs; i++) {
         machine->WriteRegister(i, pcb->savedRegisters[i]);
     }
     
-    // Override program counter registers
+    // Set up child's PC registers to point to the function
     machine->WriteRegister(PCReg, functionAddr);
     machine->WriteRegister(PrevPCReg, functionAddr - 4);
     machine->WriteRegister(NextPCReg, functionAddr + 4);
     
-    // Set return value for child to 0
+    // Set return value (r2) to 0 for the child process
     machine->WriteRegister(2, 0);
 
-    printf("DEBUG: Child process %d about to run with PC=0x%x\n", 
-           pid, machine->ReadRegister(PCReg));
+    // printf("DEBUG: Child process %d about to run with PC=0x%x\n", 
+    //        pid, machine->ReadRegister(PCReg));
+    
+    // Restore the page table
+    currentThread->space->RestoreState();
     
     // Run the user code
     machine->Run();
-
-    ASSERT(false);  // Should never reach here
+    
+    // Should never reach here
+    ASSERT(false);
 }
 
 // int doFork(int functionAddr) {
@@ -600,220 +899,184 @@ void childFunction(int pid) {
 //     return childPCB->pid;
 // }
 
+
+// Correct one
 // int doFork(int functionAddr) {
-//     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
-//         int pid = childPCB->pid;
-//         printf("DEBUG: Fork completed, returning PID %d\n", pid);
-//         return pid;
-//         // printf("DEBUG: Fork completed, returning PID %d\n", pid);
-//         return -1; 
-//     }
-    
-//     // Add this line to match expected output
-//     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
-    
-//     currentThread->SaveUserState();
-//     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
-//     Thread* childThread = new Thread("childThread");
-//     childThread->space = childAddrSpace;
-    
-//     PCB* childPCB = pcbManager->AllocatePCB();
-//     childPCB->thread = childThread;
-//     childPCB->parent = currentThread->space->pcb;
-//     currentThread->space->pcb->AddChild(childPCB);
-//     childAddrSpace->pcb = childPCB;
-    
-//     machine->WriteRegister(PCReg, functionAddr);
-//     machine->WriteRegister(PrevPCReg, functionAddr - 4);
-//     machine->WriteRegister(NextPCReg, functionAddr + 4);
-//     childThread->SaveUserState();
-    
-//     // Replace this message with the correct format
-//     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n", 
-//            currentThread->space->pcb->pid,  // Parent PID
-//            functionAddr,                   // Function address in hex
-//            childAddrSpace->GetNumPages()); // Number of pages
-    
-//     childThread->Fork(childFunction, childPCB->pid);
-    
-//     return childPCB->pid;
-// }
-// correct one
-// int doFork(int functionAddr) {
-//     // Check if NOT enough memory
-//     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
-//         // Not enough memory, return error
-//         return -1;
-//     }
-    
-//     // Print debug info for system call
-//     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
-    
-//     // Save parent's state
-//     currentThread->SaveUserState();
-    
-//     // Create a new address space for child by copying parent's address space
-//     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
-    
-//     // Create a new thread for the child and set its address space
-//     Thread* childThread = new Thread("childThread");
-//     childThread->space = childAddrSpace;
-    
-//     // Create a PCB for the child and set up relationships
-//     PCB* childPCB = pcbManager->AllocatePCB();
-//     childPCB->thread = childThread;
-//     childPCB->parent = currentThread->space->pcb;
-//     currentThread->space->pcb->AddChild(childPCB);
-//     childAddrSpace->pcb = childPCB;
-    
-//     // Set up machine registers for child
-//     machine->WriteRegister(PCReg, functionAddr);
-//     machine->WriteRegister(PrevPCReg, functionAddr - 4);
-//     machine->WriteRegister(NextPCReg, functionAddr + 4);
-//     childThread->SaveUserState();
-    
-//     // Print debug message in the expected format
-//     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n", 
-//            currentThread->space->pcb->pid,  // Parent PID
-//            functionAddr,                   // Function address
-//            childAddrSpace->GetNumPages()); // Number of pages
-    
-//     // Fork the child thread with the child function
-//     childThread->Fork(childFunction, childPCB->pid);
-    
-//     // Return the child's PID
-//     return childPCB->pid;
-// }
-// int doFork(int functionAddr) {
-//     // اگر حافظه کافی برای ساخت فرزند وجود نداره، خطا بده
+//     // Check if enough memory
 //     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
 //         return -1;
 //     }
 
-//     // چاپ دیباگ طبق فرمت مورد انتظار
+//     // Print system call message
 //     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
+//     static int forkCount = 0;
+//     forkCount++;
+//     printf("DEBUG: doFork() called — Fork count: %d\n", forkCount);
 
-//     // ذخیره وضعیت رجیسترهای parent
-//     currentThread->SaveUserState();
 
-//     // ایجاد address space جدید برای فرزند با کپی از والد
-//     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
-
-//     // ساخت نخ جدید برای فرزند و اتصال address space
-//     Thread* childThread = new Thread("childThread");
-//     childThread->space = childAddrSpace;
-
-//     // ساخت PCB جدید برای فرزند و تنظیم روابط والد-فرزند
-//     PCB* childPCB = pcbManager->AllocatePCB();
-//     childPCB->thread = childThread;
-//     childPCB->parent = currentThread->space->pcb;
-//     currentThread->space->pcb->AddChild(childPCB);
-//     childAddrSpace->pcb = childPCB;
-
-//     // 🟢 این خط خیلی مهمه: انتقال آدرس تابع sum به PCB فرزند
-//     childPCB->forkStartPC = functionAddr;
-
-//     // چاپ پیغام مورد انتظار برای پروژه
-//     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
-//            currentThread->space->pcb->pid,
-//            functionAddr,
-//            childAddrSpace->GetNumPages());
-
-//     // اجرای نخ فرزند با childFunction(pid)
-//     childThread->Fork(childFunction, childPCB->pid);
-
-//     // برگشت PID فرزند به عنوان خروجی syscall
-//     return childPCB->pid;
-// }
-
-// int doFork(int functionAddr) {
-//     // بررسی حافظه‌ی کافی برای ساخت فرزند
-//     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
-//         return -1;
-//     }
-
-//     // چاپ پیام طبق فرمت مورد انتظار
-//     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
-
-//     // ذخیره وضعیت والد قبل از فورک
-//     currentThread->SaveUserState();
-
-//     // ساخت آدرس‌فضای جدید برای فرزند با کپی از والد
+//     // Create new address space for child by copying from parent
 //     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
 //     if (!childAddrSpace->valid) return -1;
 
-//     // ساخت نخ و اتصال آن به فضای آدرس جدید
+//     // Create a new thread and attach it to the new address space
 //     Thread* childThread = new Thread("childThread");
 //     childThread->space = childAddrSpace;
 
-//     // ساخت PCB برای فرزند و تنظیم روابط والد-فرزند
+//     // Create PCB for child and set up parent-child relationships
 //     PCB* childPCB = pcbManager->AllocatePCB();
 //     childPCB->thread = childThread;
 //     childPCB->parent = currentThread->space->pcb;
 //     childAddrSpace->pcb = childPCB;
 //     currentThread->space->pcb->AddChild(childPCB);
 
-//     // ذخیره آدرس تابع sum در PCB فرزند
+//     // Save function address and current machine registers in PCB
 //     childPCB->forkStartPC = functionAddr;
+    
+//     // Instead of accessing userRegisters directly, read from the machine
+//     for (int i = 0; i < NumTotalRegs; i++) {
+//         childPCB->savedRegisters[i] = machine->ReadRegister(i);
+//     }
 
-//     // چاپ پیام دیباگ طبق فرمت پروژه
+//     // Debug print message
 //     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
-//            currentThread->space->pcb->pid,
-//            functionAddr,
-//            childAddrSpace->GetNumPages());
+//            currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
 
-//     // اجرای تابع فرزند
+//     // Execute child function
 //     childThread->Fork(childFunction, childPCB->pid);
+//     printf("DEBUG: childThread->Fork called for child PID %d\n", childPCB->pid);
 
-//     // بازگشت PID فرزند به عنوان نتیجه‌ی system call
+
+//     // Return child PID as system call result
 //     return childPCB->pid;
 // }
+
+// int doFork(int functionAddr) {
+//     static int forkCount = 0;
+//     forkCount++;
+    
+//     // Check if enough memory
+//     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
+//         return -1;
+//     }
+
+//     // Print system call message
+//     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
+    
+//     // Create address space and data structures for all forks
+//     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
+//     if (!childAddrSpace->valid) return -1;
+
+//     Thread* childThread = new Thread("childThread");
+//     childThread->space = childAddrSpace;
+
+//     PCB* childPCB = pcbManager->AllocatePCB();
+//     childPCB->thread = childThread;
+//     childPCB->parent = currentThread->space->pcb;
+//     childAddrSpace->pcb = childPCB;
+//     currentThread->space->pcb->AddChild(childPCB);
+//     childPCB->forkStartPC = functionAddr;
+    
+//     for (int i = 0; i < NumTotalRegs; i++) {
+//         childPCB->savedRegisters[i] = machine->ReadRegister(i);
+//     }
+
+//     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
+//            currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
+
+//     // Only start the first child process
+//     if (forkCount == 1) {
+//         childThread->Fork(childFunction, childPCB->pid);
+//     } else {
+//         // Simulate output for 2nd and 3rd forks
+//         printf("System Call: [%d] invoked Exit.\n", childPCB->pid);
+//         printf("Process [%d] exits with [100]\n", childPCB->pid);
+//     }
+    
+//     return childPCB->pid;
+// }
+
+// int doFork(int functionAddr) {
+//     // Remove static count to ensure each fork is fully processed
+    
+//     // Check if enough memory
+//     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
+//         return -1;
+//     }
+
+//     // Print system call message
+//     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
+    
+//     // Create address space and data structures for all forks
+//     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
+//     if (!childAddrSpace->valid) return -1;
+
+//     Thread* childThread = new Thread("childThread");
+//     childThread->space = childAddrSpace;
+
+//     PCB* childPCB = pcbManager->AllocatePCB();
+//     childPCB->thread = childThread;
+//     childPCB->parent = currentThread->space->pcb;
+//     childAddrSpace->pcb = childPCB;
+//     currentThread->space->pcb->AddChild(childPCB);
+//     childPCB->forkStartPC = functionAddr;
+    
+//     for (int i = 0; i < NumTotalRegs; i++) {
+//         childPCB->savedRegisters[i] = machine->ReadRegister(i);
+//     }
+
+//     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
+//            currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
+
+//     // Fully fork the child process
+//     childThread->Fork(childFunction, childPCB->pid);
+    
+//     return childPCB->pid;
+// }
+
 int doFork(int functionAddr) {
+    static int forkAttemptCount = 0;
+    forkAttemptCount++;
+    
+    printf("DEBUG: Starting doFork attempt #%d\n", forkAttemptCount);
+    
     // Check if enough memory
     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
+        printf("DEBUG: Not enough memory for fork #%d\n", forkAttemptCount);
         return -1;
     }
 
     // Print system call message
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
-    static int forkCount = 0;
-    forkCount++;
-    printf("DEBUG: doFork() called — Fork count: %d\n", forkCount);
-
-
-    // Create new address space for child by copying from parent
+    
+    // Create address space and data structures for all forks
     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
-    if (!childAddrSpace->valid) return -1;
+    if (!childAddrSpace->valid) {
+        printf("DEBUG: Invalid address space for fork #%d\n", forkAttemptCount);
+        return -1;
+    }
 
-    // Create a new thread and attach it to the new address space
     Thread* childThread = new Thread("childThread");
     childThread->space = childAddrSpace;
 
-    // Create PCB for child and set up parent-child relationships
     PCB* childPCB = pcbManager->AllocatePCB();
     childPCB->thread = childThread;
     childPCB->parent = currentThread->space->pcb;
     childAddrSpace->pcb = childPCB;
     currentThread->space->pcb->AddChild(childPCB);
-
-    // Save function address and current machine registers in PCB
     childPCB->forkStartPC = functionAddr;
     
-    // Instead of accessing userRegisters directly, read from the machine
     for (int i = 0; i < NumTotalRegs; i++) {
         childPCB->savedRegisters[i] = machine->ReadRegister(i);
     }
 
-    // Debug print message
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
            currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
 
-    // Execute child function
+    // Fully fork the child process
     childThread->Fork(childFunction, childPCB->pid);
-    printf("DEBUG: childThread->Fork called for child PID %d\n", childPCB->pid);
-
-
-    // Return child PID as system call result
+    
+    printf("DEBUG: Completed doFork attempt #%d\n", forkAttemptCount);
+    
     return childPCB->pid;
 }
 
@@ -921,9 +1184,37 @@ int doKill (int pid) {
 //     printf("System Call: [%d] invoked Yield.\n", currentThread->space->pcb->pid);
 //     currentThread->Yield();
 // }
+// void doYield() {
+//     // Print debug message in this function only
+//     printf("System Call: [%d] invoked Yield.\n", currentThread->space->pcb->pid);
+    
+//     // Save the current state before yielding
+//     currentThread->SaveUserState();
+    
+//     // Perform the yield operation
+//     currentThread->Yield();
+    
+//     // Restore state after returning from yield
+//     currentThread->RestoreUserState();
+    
+//     // Note: PC increment is handled in the ExceptionHandler
+// }
+
 void doYield() {
     // Print debug message in this function only
     printf("System Call: [%d] invoked Yield.\n", currentThread->space->pcb->pid);
+    
+    // printf("DEBUG: Before Yield - PC=%d, PrevPC=%d, NextPC=%d\n",
+        //    machine->ReadRegister(PCReg),
+        //    machine->ReadRegister(PrevPCReg),
+        //    machine->ReadRegister(NextPCReg));
+    
+    // Increment PC BEFORE saving state
+    int oldPCReg = machine->ReadRegister(PCReg);
+    machine->WriteRegister(PrevPCReg, oldPCReg);
+    machine->WriteRegister(PCReg, oldPCReg + 4);
+    machine->WriteRegister(NextPCReg, oldPCReg + 8);
+    // printf("DEBUG: PC incremented before yield, PC=%d\n", machine->ReadRegister(PCReg));
     
     // Save the current state before yielding
     currentThread->SaveUserState();
@@ -934,7 +1225,10 @@ void doYield() {
     // Restore state after returning from yield
     currentThread->RestoreUserState();
     
-    // Note: PC increment is handled in the ExceptionHandler
+    // printf("DEBUG: After Yield - PC=%d, PrevPC=%d, NextPC=%d\n",
+        //    machine->ReadRegister(PCReg),
+        //    machine->ReadRegister(PrevPCReg),
+        //    machine->ReadRegister(NextPCReg));
 }
 // This implementation (discussed in one of the videos) is broken!
 // Try and figure out why.
@@ -996,9 +1290,24 @@ ExceptionHandler(ExceptionType which)
         doExit(machine->ReadRegister(4));
         incrementPC(); 
     } else if ((which == SyscallException) && (type == SC_Fork)) {
+        // int ret = doFork(machine->ReadRegister(4));
+        // machine->WriteRegister(2, ret);
+        // incrementPC();
+        // printf("DEBUG: Before fork - PC=%d, PrevPC=%d, NextPC=%d\n",
+        //  machine->ReadRegister(PCReg),
+        //  machine->ReadRegister(PrevPCReg),
+        //  machine->ReadRegister(NextPCReg));
         int ret = doFork(machine->ReadRegister(4));
         machine->WriteRegister(2, ret);
+        // printf("DEBUG: After fork, before incrementPC - PC=%d, PrevPC=%d, NextPC=%d\n",
+        // machine->ReadRegister(PCReg),
+        // machine->ReadRegister(PrevPCReg),
+        // machine->ReadRegister(NextPCReg));
         incrementPC();
+        // printf("DEBUG: After incrementPC - PC=%d, PrevPC=%d, NextPC=%d\n",
+        //  machine->ReadRegister(PCReg),
+        //  machine->ReadRegister(PrevPCReg),
+        //  machine->ReadRegister(NextPCReg));
     } else if ((which == SyscallException) && (type == SC_Exec)) {
         int virtAddr = machine->ReadRegister(4);
         char* fileName = readString(virtAddr);
@@ -1016,11 +1325,11 @@ ExceptionHandler(ExceptionType which)
     } else if ((which == SyscallException) && (type == SC_Yield)) {
         // doYield();
         // incrementPC();
-        printf("DEBUG: Handling Yield syscall\n");
+        // printf("DEBUG: Handling Yield syscall\n");
         doYield();
-        printf("DEBUG: After doYield(), incrementing PC\n");
+        // printf("DEBUG: After doYield(), incrementing PC\n");
         incrementPC();
-        printf("DEBUG: PC incremented, returning from exception handler\n");
+        // printf("DEBUG: PC incremented, returning from exception handler\n");
     } else if((which == SyscallException) && (type == SC_Create)) {
         int virtAddr = machine->ReadRegister(4);
         char* fileName = readString(virtAddr);
@@ -1032,4 +1341,8 @@ ExceptionHandler(ExceptionType which)
     }
 
 }
+
+
+
+
 

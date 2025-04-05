@@ -57,7 +57,7 @@ Thread::Thread(const char* threadName)
 
 Thread::~Thread()
 {
-    DEBUG('t', "Deleting thread \"%s\"\n", name);
+    // DEBUG('t', "Deleting thread \"%s\"\n", name);
 
     ASSERT(this != currentThread);
     if (stack != NULL)
@@ -87,8 +87,8 @@ Thread::~Thread()
 void 
 Thread::Fork(VoidFunctionPtr func, int arg)
 {
-    DEBUG('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n",
-	  name, (int) func, arg);
+    // DEBUG('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n",
+	//   name, (int) func, arg);
     
     StackAllocate(func, arg);
 
@@ -139,59 +139,41 @@ Thread::CheckOverflow()
 //	between setting threadToBeDestroyed, and going to sleep.
 //----------------------------------------------------------------------
 
-//
-//Original
-void
-Thread::Finish ()
-{
-    (void) interrupt->SetLevel(IntOff);		
+void Thread::Finish() {
+    (void) interrupt->SetLevel(IntOff);
     ASSERT(this == currentThread);
     
     DEBUG('t', "Finishing thread \"%s\"\n", getName());
     
+    // Check if this is the last thread
+    Thread* nextThread = scheduler->FindNextToRun();
+    if (nextThread == NULL) {
+        // printf("DEBUG: Last thread exiting, shutting down system\n");
+        interrupt->Halt();  // Shut down cleanly
+        // This point will not be reached
+    }
+    
+    // Normal case - mark thread for destruction and switch
     threadToBeDestroyed = currentThread;
-    Sleep();					// invokes SWITCH
-    // not reached
+    Sleep();  // Invokes SWITCH
+    // Not reached
 }
-// void Thread::Finish() {
-//     (void) interrupt->SetLevel(IntOff);        
-//     ASSERT(this == currentThread);
-    
-//     DEBUG('t', "Finishing thread \"%s\"\n", getName());
-    
-//     // Check if this is the last thread
-//     Thread* nextThread = scheduler->FindNextToRun();
-//     if (nextThread == NULL) {
-//         // Last thread - safe to halt the system
-//         printf("DEBUG: No more threads to run, halting system\n");
-//         interrupt->Halt();
-//         // Won't reach here
-//     }
-    
-//     // Normal case - mark for destruction and switch to next thread
-//     threadToBeDestroyed = currentThread;
-//     Sleep();                    // invokes SWITCH
-//     // not reached
-// }
+
 // void Thread::Finish() {
 //     (void) interrupt->SetLevel(IntOff);
 //     ASSERT(this == currentThread);
     
 //     DEBUG('t', "Finishing thread \"%s\"\n", getName());
     
-//     // Check if this is the last thread
-//     Thread* nextThread = scheduler->FindNextToRun();
-//     if (nextThread == NULL) {
-//         printf("DEBUG: Last thread exiting, shutting down system\n");
-//         interrupt->Halt();  // Shut down cleanly
-//         // This point will not be reached
-//     }
-    
-//     // Normal case - mark thread for destruction and switch
+//     // نخ جاری رو برای حذف علامت‌گذاری کن
 //     threadToBeDestroyed = currentThread;
-//     Sleep();  // Invokes SWITCH
-//     // Not reached
+
+//     // فقط Sleep کن، بدون بررسی اینکه آیا نخ دیگری هست یا نه
+//     Sleep();
+
+//     // اینجا نباید برسی چون Sleep هیچ‌وقت برنمی‌گرده
 // }
+
 
 //----------------------------------------------------------------------
 // Thread::Yield
@@ -211,60 +193,44 @@ Thread::Finish ()
 // 	Similar to Thread::Sleep(), but a little different.
 //----------------------------------------------------------------------
 
-// void
-// Thread::Yield ()
-// {
-//     Thread *nextThread;
-//     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-    
-//     ASSERT(this == currentThread);
-    
-//     DEBUG('t', "Yielding thread \"%s\"\n", getName());
-    
-//     nextThread = scheduler->FindNextToRun();
-//     if (nextThread != NULL) {
-// 	scheduler->ReadyToRun(this);
-// 	scheduler->Run(nextThread);
-//     }
-//     // } else {
-//     //     // If no other thread is ready, we can go idle
-//     //     interrupt->Idle(); 
-//     // }
-//     (void) interrupt->SetLevel(oldLevel);
-
-// }
-// void Thread::Yield() {
-//     Thread *nextThread;
-//     IntStatus oldLevel = interrupt->SetLevel(IntOff);  // Disable interrupts
-
-//     ASSERT(this == currentThread);
-
-//     nextThread = scheduler->FindNextToRun();  
-//     if (nextThread != NULL) {
-//         scheduler->ReadyToRun(this); 
-//         scheduler->Run(nextThread);   
-//     } else {
-//         interrupt->Idle();  
-//     }
-//     (void) interrupt->SetLevel(oldLevel);
-// }
 void Thread::Yield() {
     Thread *nextThread;
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
+    
     ASSERT(this == currentThread);
-    DEBUG('t', "Yielding thread \"%s\"\n", getName());
+    // printf("DEBUG: Thread %s starting to yield\n", getName());
+    
     nextThread = scheduler->FindNextToRun();
+    // printf("DEBUG: Next thread to run after yield: %s\n", 
+    //    nextThread ? nextThread->getName() : "NULL");
     
     if (nextThread != NULL) {
-
+        // printf("DEBUG: Adding thread %s back to ready queue\n", getName());
         scheduler->ReadyToRun(this);
+        
+        // printf("DEBUG: Switching to thread %s\n", nextThread->getName());
         scheduler->Run(nextThread);
+        
+        // printf("DEBUG: Thread %s resumed after yielding\n", getName());
     } else {
-        interrupt->Idle();
+        // If no other thread is ready, we should still add this thread back
+        // to the ready queue before idling
+        // printf("DEBUG: No other threads to run, but adding current thread back to ready queue\n");
+        scheduler->ReadyToRun(this);
+        
+        // Find next thread again - should be this thread now
+        nextThread = scheduler->FindNextToRun();
+        if (nextThread != NULL) {
+            // printf("DEBUG: Found thread to run after adding self: %s\n", nextThread->getName());
+            scheduler->Run(nextThread);
+        } else {
+            // printf("DEBUG: Still no threads after adding self, going idle\n");
+            interrupt->Idle();
+        }
     }
+    
     (void) interrupt->SetLevel(oldLevel);
 }
-
 
 //----------------------------------------------------------------------
 // Thread::Sleep
@@ -293,7 +259,7 @@ Thread::Sleep ()
     ASSERT(this == currentThread);
     ASSERT(interrupt->getLevel() == IntOff);
     
-    DEBUG('t', "Sleeping thread \"%s\"\n", getName());
+    // DEBUG('t', "Sleeping thread \"%s\"\n", getName());
 
     status = BLOCKED;
     while ((nextThread = scheduler->FindNextToRun()) == NULL)
@@ -372,11 +338,18 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
 //	while executing kernel code.  This routine saves the former.
 //----------------------------------------------------------------------
 
-void
-Thread::SaveUserState()
-{
+// void
+// Thread::SaveUserState()
+// {
+//     for (int i = 0; i < NumTotalRegs; i++)
+// 	userRegisters[i] = machine->ReadRegister(i);
+// }
+
+void Thread::SaveUserState() {
+    // printf("DEBUG: Saving thread state for thread %s, PC=%d\n", 
+    //        getName(), machine->ReadRegister(PCReg));
     for (int i = 0; i < NumTotalRegs; i++)
-	userRegisters[i] = machine->ReadRegister(i);
+        userRegisters[i] = machine->ReadRegister(i);
 }
 
 //----------------------------------------------------------------------
@@ -388,10 +361,16 @@ Thread::SaveUserState()
 //	while executing kernel code.  This routine restores the former.
 //----------------------------------------------------------------------
 
-void
-Thread::RestoreUserState()
-{
+// void
+// Thread::RestoreUserState()
+// {
+//     for (int i = 0; i < NumTotalRegs; i++)
+// 	machine->WriteRegister(i, userRegisters[i]);
+// }
+void Thread::RestoreUserState() {
+    // printf("DEBUG: Restoring thread state for thread %s, PC=%d\n", 
+    //        getName(), userRegisters[PCReg]);
     for (int i = 0; i < NumTotalRegs; i++)
-	machine->WriteRegister(i, userRegisters[i]);
+        machine->WriteRegister(i, userRegisters[i]);
 }
 #endif
