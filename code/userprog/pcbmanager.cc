@@ -7,7 +7,7 @@ PCBManager::PCBManager(int maxCount)
     pcbManagerLock = new Lock("PCBManagerLock");
     maxProcesses  = maxCount;
 
-    for (int i = 0; i < maxCount; i++) {
+    for (int i = 0; i < maxProcesses; i++) {
         pcbs[i] = NULL;
     }
 }
@@ -15,7 +15,7 @@ PCBManager::PCBManager(int maxCount)
 PCBManager::~PCBManager()
 {
     delete bitmap;
-    delete[] pcbs;
+    delete pcbs;
     delete pcbManagerLock;
 }
 
@@ -54,8 +54,8 @@ int PCBManager::DeallocatePCB(PCB *pcb)
     }
 
     bitmap->Clear(pid);
-    delete pcbs[pid];
     pcbs[pid] = NULL;
+    delete pcbs[pid];
 
     pcbManagerLock->Release(); 
 
