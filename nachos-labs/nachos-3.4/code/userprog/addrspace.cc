@@ -83,8 +83,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
+    // Acquire mmLock to ensure thread safety
+    mmLock->Acquire();
+
     if(numPages > mm->GetFreePageCount()) {
         valid = false;
+        mmLock->Release();
         return;
     }
 
@@ -111,6 +115,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
         unsigned int physicalPageAddress = (pageTable[i].physicalPage)*128;
         bzero(&(machine->mainMemory[physicalPageAddress]), 128);
     }
+
+    // Release mmLock
+    mmLock->Release();
 
      // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
@@ -146,6 +153,28 @@ unsigned int AddrSpace::GetNumPages() {
     return numPages;
 }
 
+bool AddrSpace::IsValid() {
+    return valid;
+}
+
+// New method to release memory
+// void AddrSpace::ReleaseMemory() {
+//     if (!valid) return;
+    
+//     // Acquire mmLock to ensure thread safety
+//     mmLock->Acquire();
+    
+//     for (unsigned int i = 0; i < numPages; i++) {
+//         if (pageTable[i].valid) {
+//             mm->FreePage(pageTable[i].physicalPage);
+//             pageTable[i].valid = FALSE;
+//         }
+//     }
+    
+//     // Release mmLock
+//     mmLock->Release();
+// }
+
 
 //----------------------------------------------------------------------
 // AddrSpace::AddrSpace
@@ -154,7 +183,7 @@ unsigned int AddrSpace::GetNumPages() {
 
 AddrSpace::AddrSpace(AddrSpace* space) {
 
-    valid = true;
+    valid = false; // Set to false initially, will be set to true if successful
 
     // 1. Find how big the source address space is
     unsigned int n = space->GetNumPages();
@@ -162,9 +191,11 @@ AddrSpace::AddrSpace(AddrSpace* space) {
     // Acquire mmLock
     mmLock->Acquire();
 
-    // 2. Check if there is enough free memory to make the copy. IF not, fail
-    ASSERT(n <= mm->GetFreePageCount());
-    // Change this to informiing caller that constructor failed using valid=false;
+    // 2. Check if there is enough free memory to make the copy
+    if (n > mm->GetFreePageCount()) {
+        mmLock->Release();
+        return; // Constructor failed
+    }
 
     // 3. Create a new pagetable of same size as source addr space
     pageTable = new TranslationEntry[n];
@@ -186,20 +217,43 @@ AddrSpace::AddrSpace(AddrSpace* space) {
                 128);
     }
 
+    // Allocate a new PCB for the address space
+    pcb = pcbManager->AllocatePCB();
+    pcb->thread = NULL; // Will be set later by the Fork system call
+
     // Release mmLock
     mmLock->Release();
 
+    valid = true; // Constructor succeeded
 }
 
+void AddrSpace::ReleaseMemory() {
+    if (!valid) return;
+    
+    // Acquire mmLock to ensure thread safety
+    mmLock->Acquire();
+    
+    for (unsigned int i = 0; i < numPages; i++) {
+        if (pageTable[i].valid) {
+            // Use the FreePage method to release the page
+            mm->FreePage(pageTable[i].physicalPage);
+            pageTable[i].valid = FALSE;
+        }
+    }
+    
+    // Release mmLock
+    mmLock->Release();
+}
 
 
 //----------------------------------------------------------------------
 // AddrSpace::~AddrSpace
-// 	Dealloate an address space.  Nothing for now!
+// 	Dealloate an address space.  Release the physical memory pages.
 //----------------------------------------------------------------------
 
 AddrSpace::~AddrSpace()
 {
+   ReleaseMemory(); // Release physical memory pages
    delete pageTable;
 }
 

@@ -43,10 +43,24 @@ bool PCB::HasExited() {
 }
 
 
+// void decspn(int arg) {
+//     PCB* pcb = (PCB*)arg;
+//     if (pcb->HasExited()) pcbManager->DeallocatePCB(pcb);
+//     else pcb->parent = NULL;
+// }
+
 void decspn(int arg) {
     PCB* pcb = (PCB*)arg;
-    if (pcb->HasExited()) pcbManager->DeallocatePCB(pcb);
-    else pcb->parent = NULL;
+    if (pcb->HasExited()) {
+        // Clean up the address space if it exists - the destructor will release memory
+        if (pcb->thread && pcb->thread->space) {
+            delete pcb->thread->space;
+            pcb->thread->space = NULL;
+        }
+        pcbManager->DeallocatePCB(pcb);
+    } else {
+        pcb->parent = NULL;
+    }
 }
 
 

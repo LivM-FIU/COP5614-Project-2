@@ -4,6 +4,7 @@
 #include "list.h"
 #include "pcbmanager.h"
 #include "machine.h"
+#include "thread.h"
 
 
 
