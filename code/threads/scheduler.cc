@@ -127,6 +127,12 @@ Scheduler::Run (Thread *nextThread)
 	threadToBeDestroyed = NULL;
     }
     
+#ifdef USER_PROGRAM
+    if (currentThread->space != NULL) {		// if there is an address space
+        currentThread->RestoreUserState();     // to restore, do it.
+	currentThread->space->RestoreState();
+    }
+#endif
 }
 
 //----------------------------------------------------------------------
