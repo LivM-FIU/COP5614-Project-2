@@ -112,7 +112,7 @@ int doFork(int functionAddr)
     // Step 2: Save parent user register state
     currentThread->SaveUserState();
 
-    // Step 3: Create new address space (copy constructor)
+    // Step 3: Create new address space (deep copy)
     AddrSpace *childAddrSpace = new AddrSpace(currentThread->space);
     if (!childAddrSpace->valid)
     {
@@ -138,32 +138,37 @@ int doFork(int functionAddr)
     currentThread->space->pcb->AddChild(childPCB);
     childAddrSpace->pcb = childPCB;
 
-    // Step 6: Setup child's registers
-    childThread->SaveUserState();        // Saves default 0s; we overwrite key registers next
-    childThread->space->InitRegisters(); // sets PC, Stack, etc.
-    childThread->space->RestoreState();
+    // Step 6: Copy parent's saved user registers to child
+    childThread->CopyUserRegistersFrom(currentThread);
 
-    machine->WriteRegister(PCReg, functionAddr);
-    machine->WriteRegister(NextPCReg, functionAddr + 4);
-    machine->WriteRegister(PrevPCReg, functionAddr - 4);
+    // Set child return value of Fork to 0
+    childThread->SetUserRegister(2, 0);
 
-    childThread->SaveUserState(); // save updated regs for when child starts
+    // Set child's PC and NextPC registers
+    childThread->SetUserRegister(PCReg, functionAddr);
+    childThread->SetUserRegister(NextPCReg, functionAddr + 4);
+    childThread->SetUserRegister(PrevPCReg, functionAddr - 4);
 
     // 🔽 INSERT PRINT STATEMENTS BEFORE FORKING 🔽
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
-
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
            childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
 
-    // Step 7: Restore parent state
+    // Step 7: Fork the child thread
+    childThread->Fork([](int) {
+        currentThread->space->RestoreState();
+        currentThread->RestoreUserState();
+        machine->Run(); // Child begins execution in user mode
+    }, 0);
+
+    // Step 8: Restore parent's register state
+    currentThread->space->RestoreState();
     currentThread->RestoreUserState();
 
-    // Step 8: Fork the child thread
-    childThread->Fork((VoidFunctionPtr)childFunction, 0);
-
-    DEBUG('t', "Fork: Created child process with PID %d\n", childPCB->pid);
+    // Step 9: Return child's PID to parent
     return childPCB->pid;
 }
+
 
 int doExec(char *filename)
 {
