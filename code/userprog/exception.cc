@@ -145,7 +145,7 @@ int doFork(int functionAddr)
     // Step 7: Print info
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
-           childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
+        currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
 
     // Step 8: Fork the child thread to jump into user mode
     childThread->Fork([](int) {
