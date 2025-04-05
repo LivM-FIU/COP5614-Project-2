@@ -152,7 +152,7 @@ int doFork(int functionAddr)
     // 🔽 INSERT PRINT STATEMENTS BEFORE FORKING 🔽
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
-           childPCB->pid, functionAddr, childAddrSpace->GetNumPages());
+        currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
 
     // Step 7: Fork the child thread
     childThread->Fork([](int) {
