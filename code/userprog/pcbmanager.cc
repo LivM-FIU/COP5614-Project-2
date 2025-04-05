@@ -23,17 +23,21 @@ PCB* PCBManager::AllocatePCB()
 {
     pcbManagerLock->Acquire();  
 
-    int pid = bitmap->Find();
-
-    if (pid == -1) {
-        pcbManagerLock->Release();  
-        return NULL;
+    int pid;
+    if (!bitmap->Test(2)) {
+        pid = 2;
+        bitmap->Mark(pid);
+    } else {
+        pid = bitmap->Find();
+        if (pid == -1) {
+            pcbManagerLock->Release();  
+            return NULL;
+        }
     }
 
     pcbs[pid] = new PCB(pid);
 
     pcbManagerLock->Release();  
-
     return pcbs[pid];
 }
 
