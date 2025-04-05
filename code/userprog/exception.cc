@@ -80,8 +80,6 @@ void doExit(int status)
 
     // Finish thread
     currentThread->Finish();
-
-    // NOTE: Nothing after this line will execute
 }
 
 void incrementPC()
