@@ -21,13 +21,14 @@ PCBManager::AllocatePCB(){
     pcbs[pid] = new PCB(pid);
 }
 
-PCBManager::DeallocatePCB(PCB* pcb){
+int PCBManager::DeallocatePCB(PCB* pcb){
     
     // check if pcn is valid
     // Aquiere Lock
     bitmap.Clear(pcb -> pid);
     // Release Lock
     delete pcbs[pcb -> pid];
+    return 0;
 }
 
 PCB* PCBManager::GetPCB(int pid)
