@@ -65,6 +65,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     NoffHeader noffH;
     unsigned int i, size;
 
+
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) &&
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -154,7 +155,7 @@ unsigned int AddrSpace::GetNumPages() {
 
 AddrSpace::AddrSpace(AddrSpace* space) {
 
-    valid = true;
+    // bool valid = true;
 
     // 1. Find how big the source address space is
     unsigned int n = space->GetNumPages();

@@ -2,7 +2,10 @@
 #define PCBMANAGER_H
 
 #include "bitmap.h"
-#include "pcb.h"
+#include "synch.h"    // needed for Lock
+// #include "pcb.h"
+class PCB;            // forward declaration
+class Lock;
 
 class PCBManager{
 
@@ -11,12 +14,13 @@ class PCBManager{
         ~PCBManager();
 
         PCB* AllocatePCB();
+        PCB* GetPCB(int pid);
         int DeallocatePCB(PCB* pcb);
 
     private:
-        Bitmap* bitmap;
+        BitMap* bitmap;
         PCB** pcbs;
         Lock* pcbManagerLock;     
-}
+};
 
 #endif

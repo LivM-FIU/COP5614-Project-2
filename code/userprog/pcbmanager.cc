@@ -1,4 +1,5 @@
 #include "pcbmanager.h"
+#include "pcb.h"  
 
 PCBManager::PCBManager(int maxProcesses){
     bitmap = new BitMap(maxProcesses);
@@ -27,4 +28,9 @@ PCBManager::DeallocatePCB(PCB* pcb){
     bitmap.Clear(pcb -> pid);
     // Release Lock
     delete pcbs[pcb -> pid];
+}
+
+PCB* PCBManager::GetPCB(int pid)
+{
+    return pcbs[pid];
 }
