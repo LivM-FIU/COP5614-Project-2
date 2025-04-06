@@ -89,10 +89,7 @@ void PCB::DeleteExitedChildrenSetParentNull() {
 }
 
 void PCB::SignalParent() {
-    // اگر والد هست و منتظر این فرزند هست، می‌تونه یه شرط باشه (قابل گسترشه)
-    // ولی فعلاً یه پیام دیباگ ساده می‌زنیم:
-    printf("DEBUG: Signaling parent (PID %d) that child (PID %d) has exited\n", 
-           parent ? parent->pid : -1, pid);
+    // printf("DEBUG: Signaling parent (PID %d) that child (PID %d) has exited\n", parent ? parent->pid : -1, pid);
 }
 
 
