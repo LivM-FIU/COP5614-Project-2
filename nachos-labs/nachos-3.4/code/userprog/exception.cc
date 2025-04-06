@@ -1301,41 +1301,53 @@ int doJoin(int pid) {
 }
 
 
-int doKill (int pid) {
+int doKill(int pid) {
+    // Print kill system call message
+    printf("System Call: [%d] invoked Kill.\n", currentThread->space->pcb->pid);
 
     // 1. Check if the pid is valid and if not, return -1
-    PCB* pcb = pcbManager->GetPCB(pid);
-    if (pcb == NULL) {
-        printf("Process [%d] cannot kill process [%d]: doesn't exist\n", currentThread->space->pcb->pid, pid);
+    PCB* killPCB = pcbManager->GetPCB(pid);
+    if (killPCB == NULL) {
+        printf("Process [%d] cannot kill process [%d]: doesn't exist\n",
+            currentThread->space->pcb->pid, pid);
         return -1;
     }
 
     // 2. IF pid is self, then just exit the process
-    if (pcb == currentThread->space->pcb) {
+    if (killPCB == currentThread->space->pcb) {
         printf("Process [%d] is killing itself\n", pid);
-        doExit(0); //shouldn't ever return
+        doExit(0);
         return 0;
-     }
+    }
+
+    // Print the kill message in the required format
+    printf("Process [%d] killed process [%d]\n", currentThread->space->pcb->pid, pid);
 
     // 3. Valid kill, pid exists and not self, do cleanup similar to Exit
     // However, change references from currentThread to the target thread
-    printf("Process [%d] killed process [%d]\n", currentThread->space->pcb->pid, pid );
     
-    pcb->DeleteExitedChildrenSetParentNull();
+    // Save the exit status in the PCB so parent can retrieve it
+    killPCB->exitStatus = 0;
+    
+    // Signal the parent if needed
+    if (killPCB->parent != NULL) {
+        killPCB->SignalParent();
+    }
+    
+    // Clean up children of killed process
+    killPCB->DeleteExitedChildrenSetParentNull();
+    
+    // Clean up address space
+    if (killPCB->thread && killPCB->thread->space) {
+        delete killPCB->thread->space;
+        killPCB->thread->space = NULL;
+    }
 
-    delete pcb->thread->space;
-    pcb->thread->space = NULL;
-
-    // pcb->thread is the target thread
-
-    Thread* targetThread = pcb->thread;
-
-    // 4. Set thread to be destroyed.
-    // scheduler->RemoveThread(pcb->thread);
-    scheduler->RemoveThread(targetThread);
-
-    delete targetThread;
-    pcbManager->DeallocatePCB(pcb);
+    // 4. Set thread to be destroyed
+    if (killPCB->thread) {
+        scheduler->RemoveThread(killPCB->thread);
+        // Note: Don't delete the thread here as the scheduler may still need it
+    }
 
     // 5. return 0 for success!
     return 0;
