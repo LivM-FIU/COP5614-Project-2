@@ -1314,7 +1314,7 @@ int doKill (int pid) {
         printf("Process [%d] is killing itself\n", pid);
         doExit(0); //shouldn't ever return
         return 0;
-    // }
+     }
 
     // 3. Valid kill, pid exists and not self, do cleanup similar to Exit
     // However, change references from currentThread to the target thread
@@ -1332,7 +1332,7 @@ int doKill (int pid) {
     // scheduler->RemoveThread(pcb->thread);
     scheduler->RemoveThread(targetThread);
 
-    pcbManager->Deallocate(pcb);
+    pcbManager->DeallocatePCB(pcb);
     delete targetThread;
     delete pcb;
 
