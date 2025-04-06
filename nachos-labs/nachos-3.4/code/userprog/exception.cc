@@ -1303,24 +1303,41 @@ int doJoin(int pid) {
 int doKill (int pid) {
 
     // 1. Check if the pid is valid and if not, return -1
-    // PCB* joinPCB = pcbManager->GetPCB(pid);
-    // if (pcb == NULL) return -1;
+    PCB* pcb = pcbManager->GetPCB(pid);
+    if (pcb == NULL) {
+        printf("Process [%d] cannot kill process [%d]: doesn't exist\n", currentThread->space->pcb->pid, pid);
+        return -1;
+    }
 
     // 2. IF pid is self, then just exit the process
-    // if (pcb == currentThread->space->pcb) {
-    //         doExit(0);
-    //         return 0;
+    if (pcb == currentThread->space->pcb) {
+        printf("Process [%d] is killing itself\n", pid);
+        doExit(0); //shouldn't ever return
+        return 0;
     // }
 
     // 3. Valid kill, pid exists and not self, do cleanup similar to Exit
     // However, change references from currentThread to the target thread
+    printf("Process [%d] killed process [%d]\n", currentThread->space->pcb->pid, pid );
+    
+    Thread* targetThread = pcb->thread;
+
     // pcb->thread is the target thread
+
+    pcb-->DeleteExitedChildrenSetParentNull();
+
+    delete pcb->addrSpace;
 
     // 4. Set thread to be destroyed.
     // scheduler->RemoveThread(pcb->thread);
+    scheduler->RemoveThread(targetThread);
+
+    pcbManager->Deallocate(pcb);
+    delete targetThread;
+    delete pcb;
 
     // 5. return 0 for success!
-    return -1;
+    return 0;
 }
 
 
