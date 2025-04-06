@@ -25,6 +25,7 @@
 #include "system.h"
 #include "syscall.h"
 #include "system.h"
+#include "pcb.h"
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -1320,21 +1321,21 @@ int doKill (int pid) {
     // However, change references from currentThread to the target thread
     printf("Process [%d] killed process [%d]\n", currentThread->space->pcb->pid, pid );
     
-    Thread* targetThread = pcb->thread;
+    pcb->DeleteExitedChildrenSetParentNull();
+
+    delete pcb->thread->space;
+    pcb->thread->space = NULL;
 
     // pcb->thread is the target thread
 
-    pcb-->DeleteExitedChildrenSetParentNull();
-
-    delete pcb->addrSpace;
+    Thread* targetThread = pcb->thread;
 
     // 4. Set thread to be destroyed.
     // scheduler->RemoveThread(pcb->thread);
     scheduler->RemoveThread(targetThread);
 
-    pcbManager->DeallocatePCB(pcb);
     delete targetThread;
-    delete pcb;
+    pcbManager->DeallocatePCB(pcb);
 
     // 5. return 0 for success!
     return 0;
