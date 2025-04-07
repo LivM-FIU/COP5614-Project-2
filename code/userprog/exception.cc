@@ -242,7 +242,7 @@ int doJoin(int pid)
 
     // Step 4: Deallocate the child PCB (only if it's safe)
     // If parent is Join-ing, and child has exited, we're free to delete
-    pcbManager->DeallocatePCB(childPCB);
+    // pcbManager->DeallocatePCB(childPCB);
 
     return status;
 }
