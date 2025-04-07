@@ -72,12 +72,12 @@ void doExit(int status)
     pcb->DeleteExitedChildrenSetParentNull();
 
     // If it has no parent, free the PCB now
-    // if (pcb->parent == NULL)
-    // {
-    //     pcbManager->DeallocatePCB(pcb);
-    // }
+    if (pcb->parent == NULL)
+    {
+        pcbManager->DeallocatePCB(pcb);
+    }
 
-    pcbManager->DeallocatePCB(pcb);
+    // pcbManager->DeallocatePCB(pcb);
 
     // Clean up address space (which includes PCB pointer)
     delete currentThread->space;
