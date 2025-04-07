@@ -155,12 +155,7 @@ int doFork(int functionAddr)
         currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
 
     // Step 8: Fork the child thread to jump into user mode
-    childThread->Fork([](int) {
-        currentThread->space->RestoreState();
-        currentThread->RestoreUserState();
-        machine->Run(); // never returns
-        ASSERT(FALSE);
-    }, 0);
+    childThread->Fork(childFunction, 0);
 
     // Step 9: Restore parent's state and return child PID
     currentThread->space->RestoreState();
