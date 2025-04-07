@@ -49,8 +49,3 @@ void PCB::DeleteExitedChildrenSetParentNull()
 {
     children->Mapcar(decspn);
 }
-
-List* PCB::GetChildren()
-{
-    return children;
-}

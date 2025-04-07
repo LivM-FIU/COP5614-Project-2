@@ -20,8 +20,6 @@ class PCB {
         int RemoveChild(PCB* pcb);
         bool HasExited();
         void DeleteExitedChildrenSetParentNull();
-        List* GetChildren();
-
 
     private:
         List* children;
