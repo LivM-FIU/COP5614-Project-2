@@ -62,11 +62,11 @@ void doExit(int status)
     // Mark process as exited
     pcb->exitStatus = status;
 
-    // Remove from parent-child relationships
-    // if (pcb->parent != NULL)
-    // {
-    //     pcb->parent->RemoveChild(pcb);
-    // }
+    //Remove from parent-child relationships
+    if (pcb->parent != NULL)
+    {
+        pcb->parent->RemoveChild(pcb);
+    }
 
     // Clean up children: delete exited children, nullify parent in others
     pcb->DeleteExitedChildrenSetParentNull();
