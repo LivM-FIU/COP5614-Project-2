@@ -186,7 +186,7 @@ int doExec(char *filename)
     // 3. Create a new address space
     space = new AddrSpace(executable);
 
-    printf("Exec Program: [%d] loading [%s]\n", currentThread->space->pcb->pid, filename);
+    printf("Exec Program: [%d] loading [%s]\n",space->pcb->pid, filename);
 
     // 4. Close the executable file
     delete executable;
