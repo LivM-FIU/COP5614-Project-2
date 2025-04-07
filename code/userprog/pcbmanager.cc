@@ -24,7 +24,7 @@ PCB* PCBManager::AllocatePCB()
     pcbManagerLock->Acquire();  
 
     int pid = bitmap->Find();
-    printf("PCBManager: Allocating PID %d\n", pid);
+    // printf("PCBManager: Allocating PID %d\n", pid);
 
     if (pid == -1) {
         pcbManagerLock->Release();  
@@ -55,7 +55,7 @@ int PCBManager::DeallocatePCB(PCB *pcb)
     }
 
     bitmap->Clear(pid);
-    printf("PCBManager: Freed PID %d\n", pid);
+    // printf("PCBManager: Freed PID %d\n", pid);
     delete pcbs[pid];
     pcbs[pid] = NULL;
    
