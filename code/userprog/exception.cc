@@ -105,6 +105,8 @@ void childFunction(int pid)
 
 int doFork(int functionAddr)
 {
+        // Step 7: Print info
+    printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     // Step 1: Check if enough memory
     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
         printf("Not Enough Memory for Child Process %d\n", currentThread->space->pcb->pid);
@@ -145,8 +147,6 @@ int doFork(int functionAddr)
     childThread->SetUserRegister(NextPCReg, functionAddr + 4);
     childThread->SetUserRegister(PrevPCReg, functionAddr - 4);
 
-    // Step 7: Print info
-    printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     // printf("PID [%d]\n", childPCB->pid);
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
         currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
