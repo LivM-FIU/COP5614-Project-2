@@ -112,7 +112,7 @@ int doFork(int functionAddr)
     // Step 1: Check if enough memory
 
     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
-        printf("Not Enough Memory for Child Process %d\n", forkAttemptCount);
+        printf("Not Enough Memory for Child Process %d\n", currentThread->space->pcb->exitStatus);
         return -1;
     }
 
