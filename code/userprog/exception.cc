@@ -266,7 +266,10 @@ int doKill(int pid)
         return 0;
     }
 
-    printf("Process: [%d] Killed process [%d]\n", currentThread->space->pcb->pid, pid);
+    // FIXED FORMATTING TO MATCH EXPECTED OUTPUT
+    printf("System Call: [%d] invoked Kill.\n", currentThread->space->pcb->pid);
+    printf("Process [%d] killed process [%d]\n",
+           currentThread->space->pcb->pid, pid);
 
     // Step 3: Remove from parent's children list if parent exists
     if (victimPCB->parent != NULL) {
@@ -293,6 +296,7 @@ int doKill(int pid)
     // Step 8: Return success
     return 0;
 }
+
 
 
 void doYield()
