@@ -220,34 +220,33 @@ int doExec(char *filename)
 
 int doJoin(int pid)
 {
-    // Step 1: Validate that PID exists
     PCB *childPCB = pcbManager->GetPCB(pid);
-    if (childPCB == NULL)
-    {
-        return -1; // Invalid PID
-    }
-
-    // Step 2: Make sure the PID belongs to a child of the calling process
     PCB *parentPCB = currentThread->space->pcb;
-    if (childPCB->parent != parentPCB)
+
+    printf("System Call: [%d] invoked Join.\n", parentPCB->pid);
+
+    // Step 1: Check that PID is valid and belongs to a child
+    if (childPCB == NULL || childPCB->parent != parentPCB)
     {
-        return -1; // Not a child
+        return -1;
     }
 
-    // Step 3: Wait for child to finish (using busy wait + yield)
+    // Step 2: Wait until the child exits
     while (!childPCB->HasExited())
     {
         currentThread->Yield();
     }
 
-    // Step 4: Retrieve and return child's exit status
+    // Step 3: Get exit status
     int status = childPCB->exitStatus;
 
-    // Step 5: Clean up PCB
+    // Step 4: Deallocate the child PCB (only if it's safe)
+    // If parent is Join-ing, and child has exited, we're free to delete
     pcbManager->DeallocatePCB(childPCB);
 
     return status;
 }
+
 
 int doKill(int pid)
 {
