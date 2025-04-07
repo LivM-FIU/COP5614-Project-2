@@ -167,7 +167,7 @@ int doFork(int functionAddr)
 
 int doExec(char *filename)
 {
-    printf("System Call: [%d] invoked Exec on [%s]\n", currentThread->space->pcb->pid, filename);
+    printf("System Call: [%d] invoked \n", currentThread->space->pcb->pid);
 
     // 1. Open the executable file
     OpenFile *executable = fileSystem->Open(filename);
