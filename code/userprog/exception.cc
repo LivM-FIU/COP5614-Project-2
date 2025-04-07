@@ -112,7 +112,6 @@ int doFork(int functionAddr)
     int newPid = currentThread->space->pcb->pid;
 
     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
-        printf("Not Enough Memory for Child Process %d\n", newPid);
         return -1;
     }
 
@@ -122,6 +121,7 @@ int doFork(int functionAddr)
     // Step 3: Deep copy of the parent address space
     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
     if (!childAddrSpace->valid) {
+       printf("Not Enough Memory for Child Process %d\n", newPid);
         delete childAddrSpace;
         return -1;
     }
