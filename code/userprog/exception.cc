@@ -218,34 +218,46 @@ int doExec(char *filename)
     return 0;
 }
 
-int doJoin(int pid)
+int doJoin(int join_pid)
 {
-    PCB *childPCB = pcbManager->GetPCB(pid);
-    PCB *parentPCB = currentThread->space->pcb;
+    int caller_pid = currentThread->space->pcb->pid;
+    printf("System Call: [%d] invoked Join.\n", caller_pid);
 
-    printf("System Call: [%d] invoked Join.\n", parentPCB->pid);
-
-    // Step 1: Check that PID is valid and belongs to a child
-    if (childPCB == NULL || childPCB->parent != parentPCB)
+    // 1. Disallow joining on self
+    if (join_pid == caller_pid)
     {
+        DEBUG('e', "Process [%d] trying to join on itself: not allowed\n", join_pid);
+        return -9999;
+    }
+
+    // 2. Validate PID exists
+    PCB *join_pcb = pcbManager->GetPCB(join_pid);
+    if (join_pcb == NULL)
+    {
+        DEBUG('e', "Process [%d] cannot join process [%d]: doesn't exist\n", caller_pid, join_pid);
         return -1;
     }
 
-    // Step 2: Wait until the child exits
-    while (!childPCB->HasExited())
+    // 3. Ensure caller is the parent
+    PCB *parent_pcb = join_pcb->parent;
+    if (parent_pcb == NULL || parent_pcb->pid != caller_pid)
+    {
+        DEBUG('e', "Non-parent [%d] trying to join on [%d]: not allowed\n", caller_pid, join_pid);
+        return -9999;
+    }
+
+    // 4. Wait until child exits
+    while (!join_pcb->HasExited())
     {
         currentThread->Yield();
     }
 
-    // Step 3: Get exit status
-    int status = childPCB->exitStatus;
+    DEBUG('e', "Process [%d] joined on [%d]\n", caller_pid, join_pid);
 
-    // Step 4: Deallocate the child PCB (only if it's safe)
-    // If parent is Join-ing, and child has exited, we're free to delete
-    // pcbManager->DeallocatePCB(childPCB);
-
-    return status;
+    // 5. Return child's exit status (do not delete PCB — allow delayed cleanup)
+    return join_pcb->exitStatus;
 }
+
 
 
 int doKill(int pid)
