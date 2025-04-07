@@ -109,19 +109,12 @@ int doFork(int functionAddr)
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     // Step 1: Check if enough memory
 
-    int newPid = currentThread->space->pcb->pid;
-
-    if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
-        return -1;
-    }
-
     // Step 2: Save parent's user register state
     currentThread->SaveUserState();
 
     // Step 3: Deep copy of the parent address space
     AddrSpace* childAddrSpace = new AddrSpace(currentThread->space);
     if (!childAddrSpace->valid) {
-       printf("Not Enough Memory for Child Process %d\n", newPid);
         delete childAddrSpace;
         return -1;
     }
@@ -135,6 +128,11 @@ int doFork(int functionAddr)
     if (childPCB == nullptr) {
         delete childThread;
         delete childAddrSpace;
+        return -1;
+    }
+
+    if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
+        printf("Not Enough Memory for Child Process %d\n", childPCB->pid);
         return -1;
     }
 
