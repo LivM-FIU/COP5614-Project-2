@@ -111,8 +111,6 @@ int doFork(int functionAddr)
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     // Step 1: Check if enough memory
 
-    int newPid = currentThread->space->pcb->pid;
-
     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
         printf("Not Enough Memory for Child Process %d\n", forkAttemptCount);
         return -1;
