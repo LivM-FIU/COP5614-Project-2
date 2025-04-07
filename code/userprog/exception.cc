@@ -108,8 +108,11 @@ int doFork(int functionAddr)
         // Step 7: Print info
     printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
     // Step 1: Check if enough memory
+
+    int newPid = pcbManager->bitmap->Find();
+
     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
-        printf("Not Enough Memory for Child Process %d\n", currentThread->space->pcb->pid);
+        printf("Not Enough Memory for Child Process %d\n", newPid);
         return -1;
     }
 
