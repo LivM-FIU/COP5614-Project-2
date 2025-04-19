@@ -384,23 +384,27 @@ void doCreate(char* fileName) {
 // ------------------------------------------------------------------
 // doRead - Read syscall implementation
 int doRead(int fileId, int virtAddr, int size) {
-    int pid = currentThread->space->pcb->pid;
-    printf("Syscall Call: [%d] invoked Read.\n", pid);
+    printf("Syscall Call: [%d] invoked Read.\n", currentThread->space->pcb->pid);
 
+    // Handle ConsoleInput
     if (fileId == ConsoleInput) {
         char line[256];
-        if (fgets(line, sizeof(line), stdin) == NULL) return 0;
+
+        if (fgets(line, sizeof(line), stdin) == NULL) {
+            return 0;
+        }
 
         int len = strlen(line);
-        if (len > 0 && line[len - 1] == '\n') {
+        if (line[len - 1] == '\n') {
             line[len - 1] = '\0';
             len--;
         }
+
         if (len > size) len = size;
 
         for (int i = 0; i < len; i++) {
             if (!machine->WriteMem(virtAddr + i, 1, line[i])) {
-                printf("WriteMem failed at byte %d\n", i);
+                printf("WriteMem failed for console input at byte %d\n", i);
                 return -1;
             }
         }
@@ -408,25 +412,26 @@ int doRead(int fileId, int virtAddr, int size) {
         return len;
     }
 
+    // Handle file input
     if (fileId < 0 || fileId >= MAX_OPEN_FILES || !openFileUsed[fileId]) {
-        printf("doRead: Invalid file descriptor %d\n", fileId);
         return -1;
     }
 
-    char* tempBuffer = new char[size];
-    int bytesRead = openFileTable[fileId]->Read(tempBuffer, size);
+    char* temp = new char[size];
+    int bytesRead = openFileTable[fileId]->Read(temp, size);
 
     for (int i = 0; i < bytesRead; i++) {
-        if (!machine->WriteMem(virtAddr + i, 1, tempBuffer[i])) {
-            printf("WriteMem failed while copying file content\n");
-            delete[] tempBuffer;
+        if (!machine->WriteMem(virtAddr + i, 1, temp[i])) {
+            printf("WriteMem failed for file input at byte %d\n", i);
+            delete[] temp;
             return -1;
         }
     }
 
-    delete[] tempBuffer;
+    delete[] temp;
     return bytesRead;
 }
+
 
 // ------------------------------------------------------------------
 // doWrite - Write syscall implementation
