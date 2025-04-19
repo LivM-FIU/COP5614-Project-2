@@ -389,22 +389,17 @@ int doRead(int fileId, char* buffer, int size) {
         char line[256];
         if (fgets(line, sizeof(line), stdin) == NULL) return 0;
         int len = strlen(line);
-    
-        // Remove newline if present
         if (len > 0 && line[len - 1] == '\n') {
             line[len - 1] = '\0';
             len--;
         }
-    
         if (len > size) len = size;
         memcpy(buffer, line, len);
         return len;
     }
-    
     if (fileId < 0 || fileId >= MAX_OPEN_FILES || !openFileUsed[fileId]) return -1;
     return openFileTable[fileId]->Read(buffer, size);
 }
-
 
 // ------------------------------------------------------------------
 // doWrite - Write syscall implementation
