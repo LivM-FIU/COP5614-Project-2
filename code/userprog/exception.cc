@@ -383,31 +383,23 @@ void doCreate(char* fileName) {
 
 // ------------------------------------------------------------------
 // doRead - Read syscall implementation
-int doRead(int fileId, char* buffer, int size) {
+int doRead(int fileId, int virtAddr, int size) {
     int pid = currentThread->space->pcb->pid;
     printf("Syscall Call: [%d] invoked Read.\n", pid);
 
-    // Reading from console (keyboard)
     if (fileId == ConsoleInput) {
         char line[256];
-
-        // Get user input from stdin
         if (fgets(line, sizeof(line), stdin) == NULL) return 0;
 
         int len = strlen(line);
-
-        // Optional: trim newline
         if (len > 0 && line[len - 1] == '\n') {
             line[len - 1] = '\0';
             len--;
         }
-
-        // Clamp length to requested size
         if (len > size) len = size;
 
-        // Copy into user memory using WriteMem
         for (int i = 0; i < len; i++) {
-            if (!machine->WriteMem((int)buffer + i, 1, line[i])) {
+            if (!machine->WriteMem(virtAddr + i, 1, line[i])) {
                 printf("WriteMem failed at byte %d\n", i);
                 return -1;
             }
@@ -416,19 +408,16 @@ int doRead(int fileId, char* buffer, int size) {
         return len;
     }
 
-    // Check if fileId is valid
     if (fileId < 0 || fileId >= MAX_OPEN_FILES || !openFileUsed[fileId]) {
         printf("doRead: Invalid file descriptor %d\n", fileId);
         return -1;
     }
 
-    // Allocate temporary buffer to read from file
     char* tempBuffer = new char[size];
     int bytesRead = openFileTable[fileId]->Read(tempBuffer, size);
 
-    // Copy data into user space using WriteMem
     for (int i = 0; i < bytesRead; i++) {
-        if (!machine->WriteMem((int)buffer + i, 1, tempBuffer[i])) {
+        if (!machine->WriteMem(virtAddr + i, 1, tempBuffer[i])) {
             printf("WriteMem failed while copying file content\n");
             delete[] tempBuffer;
             return -1;
@@ -475,15 +464,11 @@ void ExceptionHandler(ExceptionType which) {
         int fileId = machine->ReadRegister(4);
         int virtAddr = machine->ReadRegister(5);
         int size = machine->ReadRegister(6);
+    
         if (size <= 0 || virtAddr < 0) {
             machine->WriteRegister(2, -1);
         } else {
-            char* buffer = new char[size];
-            int bytesRead = doRead(fileId, buffer, size);
-            for (int i = 0; i < bytesRead; i++) {
-                machine->WriteMem(virtAddr + i, 1, buffer[i]);
-            }
-            delete[] buffer;
+            int bytesRead = doRead(fileId, virtAddr, size);
             machine->WriteRegister(2, bytesRead);
         }
         incrementPC();
