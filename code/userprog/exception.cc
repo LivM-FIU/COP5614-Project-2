@@ -397,7 +397,9 @@ int doRead(int fileId, char* buffer, int size) {
         memcpy(buffer, line, len);
         return len;
     }
+
     if (fileId < 0 || fileId >= MAX_OPEN_FILES || !openFileUsed[fileId]) return -1;
+   
     return openFileTable[fileId]->Read(buffer, size);
 }
 
