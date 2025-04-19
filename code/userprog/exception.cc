@@ -27,7 +27,11 @@
 #include "system.h"
 #include "addrspace.h"
 #include "thread.h"
-
+#define FileNameMaxLen 128
+static OpenFile* openFileTable[20] = {NULL};
+static bool openFileUsed[20] = {false};
+// #include "synchconsole.h"
+// SynchConsole *synchConsole;
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -62,11 +66,11 @@ void doExit(int status)
     // Mark process as exited
     pcb->exitStatus = status;
 
-    //Remove from parent-child relationships
-    if (pcb->parent != NULL)
-    {
-        pcb->parent->RemoveChild(pcb);
-    }
+    // Remove from parent-child relationships
+    // if (pcb->parent != NULL)
+    // {
+    //     pcb->parent->RemoveChild(pcb);
+    // }
 
     // Clean up children: delete exited children, nullify parent in others
     pcb->DeleteExitedChildrenSetParentNull();
@@ -85,6 +89,7 @@ void doExit(int status)
     // Finish thread
     currentThread->Finish();
 }
+
 
 void incrementPC()
 {
@@ -107,10 +112,11 @@ int doFork(int functionAddr)
 {
     static int forkAttemptCount = 0;
     forkAttemptCount++;
-        // Step 7: Print info
-    printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
-    // Step 1: Check if enough memory
 
+    // First print that Fork was invoked
+    printf("System Call: [%d] invoked Fork.\n", currentThread->space->pcb->pid);
+
+    // Step 1: Check if enough memory
     if (currentThread->space->GetNumPages() > mm->GetFreePageCount()) {
         printf("Not Enough Memory for Child Process %d\n", forkAttemptCount);
         return -1;
@@ -150,12 +156,18 @@ int doFork(int functionAddr)
     childThread->SetUserRegister(NextPCReg, functionAddr + 4);
     childThread->SetUserRegister(PrevPCReg, functionAddr - 4);
 
-    // printf("PID [%d]\n", childPCB->pid);
+    // Step 7: Print info about the fork
+    // Note: Removed the duplicate Fork invocation message that was here
     printf("Process [%d] Fork: start at address [0x%x] with [%d] pages memory\n",
         currentThread->space->pcb->pid, functionAddr, childAddrSpace->GetNumPages());
 
     // Step 8: Fork the child thread to jump into user mode
-    childThread->Fork(childFunction, 0);
+    childThread->Fork([](int) {
+        currentThread->space->RestoreState();
+        currentThread->RestoreUserState();
+        machine->Run(); // never returns
+        ASSERT(FALSE);
+    }, 0);
 
     // Step 9: Restore parent's state and return child PID
     currentThread->space->RestoreState();
@@ -217,46 +229,200 @@ int doExec(char *filename)
     return 0;
 }
 
-int doJoin(int join_pid)
+OpenFileId doOpen(char *fileName)
 {
-    int caller_pid = currentThread->space->pcb->pid;
-    printf("System Call: [%d] invoked Join.\n", caller_pid);
+    // Printing sys call message
+    printf("System Call: [%d] invoked Open\n", currentThread->space->pcb->pid);
 
-    // 1. Disallow joining on self
-    if (join_pid == caller_pid)
-    {
-        DEBUG('e', "Process [%d] trying to join on itself: not allowed\n", join_pid);
-        return -9999;
-    }
-
-    // 2. Validate PID exists
-    PCB *join_pcb = pcbManager->GetPCB(join_pid);
-    if (join_pcb == NULL)
-    {
-        DEBUG('e', "Process [%d] cannot join process [%d]: doesn't exist\n", caller_pid, join_pid);
+    // Try to open file w/ Nachos' filsys. Return pointer to object (OpenFile)
+    OpenFile *file = fileSystem->Open(fileName);
+    // Check if file can be opened. If not, print error
+    if (file == NULL) {
+        printf("doOpen: Failed to open file %s\n", fileName);
         return -1;
     }
 
-    // 3. Ensure caller is the parent
-    PCB *parent_pcb = join_pcb->parent;
-    if (parent_pcb == NULL || parent_pcb->pid != caller_pid)
-    {
-        DEBUG('e', "Non-parent [%d] trying to join on [%d]: not allowed\n", caller_pid, join_pid);
-        return -9999;
+    // Loop through file descriptor table, start from 2 (skip 0/1 for stdin/stdout) 
+    for (int i = 2; i < 20; i++) { 
+        // Checking if current file descriptor slot is unsued
+        if (!openFileUsed[i]) {
+            // Assign new opened file to slot
+            openFileTable[i] = file;
+            // Mark the file descriptor as in use
+            openFileUsed[i] = true;
+            // Return file desrciptor to user program
+            return i;
+        }
     }
 
-    // 4. Wait until child exits
-    while (!join_pcb->HasExited())
-    {
+    // If there's no file descriptor slots available, delete the file object
+    delete file;
+    // Return failure
+    return -1;
+}
+
+
+bool doClose(int fileId)
+{
+    // Print syscall message
+    printf("System Call: [%d] invoked Close.\n", currentThread->space->pcb->pid);
+    
+    // If fileId is outside valid range of file descriptory indices (0-19)
+    if (fileId < 0 || fileId >= 20) {
+        return false; // Invalid file descriptor
+    }
+    
+    // Check if file is not open or marked as unused
+    if (openFileTable[fileId] == NULL || !openFileUsed[fileId]) {
+        return false; // Nothing to close
+    }
+    
+    // Close file by deleting OpenFile object
+    delete openFileTable[fileId];
+    // Clear file table entry to show no file is associated with this descriptor 
+    openFileTable[fileId] = NULL;
+    // Mark file descriptor slot as not in use
+    openFileUsed[fileId] = false;
+    
+    // Return true to show file was closed
+    return true;
+}
+
+void doCreate(char *fileName)
+{
+    // Getting current PID
+    int pid = currentThread->space->pcb->pid;
+    // Syscall print
+    printf("Syscall Call: [%d] invoked Create.\n", pid);
+    
+    //Try to create file with size 0 w/ Nachos file sys
+    // fileName already copied from user space 
+    bool success = fileSystem->Create(fileName, 0);
+    
+    // If file created, print success
+    if (success) {
+        printf("File Creation Successful: File [%s] created by PID [%d]\n", fileName, pid);
+    } else {
+        //Failure message
+        printf("File Creation Failure: File [%s] not created\n", fileName);
+    }
+    
+    //Write result (1 = success, -1 = failure) into reg2
+    machine->WriteRegister(2, success ? 1 : -1);
+    
+    // Free allocated memory used for file 
+    delete[] fileName;
+}
+
+int doJoin(int pid) {
+    printf("System Call: [%d] invoked Join.\n", currentThread->space->pcb->pid);
+
+    PCB* joinPCB = pcbManager->GetPCB(pid);
+    if (joinPCB == NULL) {
+        return -1;
+    }
+
+    PCB* pcb = currentThread->space->pcb;
+    if (pcb != joinPCB->parent) {
+        return -1;
+    }
+
+    // Wait until the child has exited.
+    while(!joinPCB->HasExited()) {
         currentThread->Yield();
     }
 
-    DEBUG('e', "Process [%d] joined on [%d]\n", caller_pid, join_pid);
+    // Retrieve child's exit status.
+    int status = joinPCB->exitStatus;
 
-    // 5. Return child's exit status (do not delete PCB — allow delayed cleanup)
-    return join_pcb->exitStatus;
+    // Now, deallocate the child's PCB.
+    pcbManager->DeallocatePCB(joinPCB);
+
+    return status;
 }
 
+int doRead(int fileId, char *buffer, int size)
+{
+    // Getting current PID
+    int pid = currentThread->space->pcb->pid;
+    // Print syscall message
+    printf("System Call: [%d] invoked Read.\n", pid);
+
+    // Handling for reading from Console Input (file descriptor 0)
+    if (fileId == ConsoleInput) {
+        //Temp buffer to hold input console
+        char line[256];
+
+        // Read from srtdin, return 0 for error
+        if (fgets(line, sizeof(line), stdin) == NULL) {
+            return 0; 
+        }
+
+        // Getting number of characters used
+        int len = strlen(line);
+        // If input larger than buffer size, trucante it 
+        if (len > size) len = size;
+        // Copy into user buffer from input
+        memcpy(buffer, line, len);
+        // Return number of bytes copied
+        return len;
+    }
+
+    // Validate fileId is within range and refers to open file
+    if (fileId < 0 || fileId >= 20 || !openFileUsed[fileId]) {
+        printf("doRead: Invalid or unopened fileId %d\n", fileId);
+        return -1;
+    }
+
+    // Getting OpenFile pointer
+    OpenFile *file = openFileTable[fileId];
+
+    // Making sure pointer is not NULL
+    if (file == NULL) {
+        printf("doRead: fileId %d is NULL\n", fileId);
+        return -1;
+    }
+
+    // Calling Read() which reads the size into buffer and advances offset
+    int bytesRead = file->Read(buffer, size);
+
+    //Return number of bytes read
+    return bytesRead;
+}
+
+
+int doWrite(int fileId, char *buffer, int size)
+{
+    //Getting current pid
+    int pid = currentThread->space->pcb->pid;
+
+    //Print syscall 
+    printf("System Call: [%d] invoked Write.\n", currentThread->space->pcb->pid);
+
+    // Handling writing to Console Output (file descriptor 1)
+    if (fileId == ConsoleOutput) {
+        // Looping each character in buffer and print
+        for (int i = 0; i < size; i++) {
+            printf("%c", buffer[i]); 
+        }
+        // Return number of characters written to console
+        return size;
+    }
+
+    // Validating fileId is within range and refers to open file
+    if (fileId < 0 || fileId >= 20 || !openFileUsed[fileId]) {
+         return -1; // Invalid
+    }
+    // Getting OpenFile object from open file table
+    OpenFile* file = openFileTable[fileId];
+
+    // Check if point is NULL, return error if NULL
+    if (file == NULL) {
+        return -1;
+    }
+    // Write data from buffer to file and return number of bytes written
+    return file->Write(buffer, size);
+}
 
 
 int doKill(int pid)
@@ -307,8 +473,6 @@ int doKill(int pid)
     return 0;
 }
 
-
-
 void doYield()
 {
     DEBUG('t', "System Call: [%d] invoked Yield.\n", currentThread->space->pcb->pid);
@@ -316,23 +480,6 @@ void doYield()
     currentThread->Yield();
 }
 
-// This implementation (discussed in one of the videos) is broken!
-// Try and figure out why.
-// char *readString1(int virtAddr)
-// {
-
-//     unsigned int pageNumber = virtAddr / 128;
-//     unsigned int pageOffset = virtAddr % 128;
-//     unsigned int frameNumber = machine->pageTable[pageNumber].physicalPage;
-//     unsigned int physicalAddr = frameNumber * 128 + pageOffset;
-
-//     char *string = &(machine->mainMemory[physicalAddr]);
-
-//     return string;
-// }
-
-// This implementation is correct!
-// perform MMU translation to access physical memory
 char *readString(int virtualAddr)
 {
     int i = 0;
@@ -356,11 +503,6 @@ char *readString(int virtualAddr)
     return str;
 }
 
-void doCreate(char *fileName)
-{
-    printf("Syscall Call: [%d] invoked Create.\n", currentThread->space->pcb->pid);
-    fileSystem->Create(fileName, 0);
-}
 
 void ExceptionHandler(ExceptionType which)
 {
@@ -414,9 +556,103 @@ void ExceptionHandler(ExceptionType which)
         doCreate(fileName);
         incrementPC();
     }
-    else
+        else if ((which == SyscallException) && (type == SC_Open))
     {
-        printf("Unexpected user mode exception %d %d\n", which, type);
-        ASSERT(FALSE);
+        int virtAddr = machine->ReadRegister(4);
+        char *fileName = readString(virtAddr);
+        OpenFileId ret = doOpen(fileName);
+        machine->WriteRegister(2, ret);
+        delete[] fileName;
+        incrementPC();
     }
+    else if ((which == SyscallException) && (type == SC_Read)) 
+    {
+        int fileId = machine->ReadRegister(4);     // File descriptor
+        int virtAddr = machine->ReadRegister(5);   // Virtual address of user buffer
+        int size = machine->ReadRegister(6);       // Number of bytes to read
+    
+        // Validating input to ensure size is positive and address is not negative
+        if (size <= 0 || virtAddr < 0) {
+            machine->WriteRegister(2, -1); // Error
+            incrementPC(); // Advance prog counter 
+            return; // Exit handler
+        }
+    
+        // Allocate kernel buffer for temp read data hold
+        char *kernelBuffer = new char[size];
+    
+        // Perform read
+        int bytesRead = doRead(fileId, kernelBuffer, size);
+    
+        // Copy data from kernel and back into user memory
+        for (int i = 0; i < bytesRead; i++) {
+            // Write byte to user memory 
+            bool success = machine->WriteMem(virtAddr + i, 1, kernelBuffer[i]);
+            if (!success) {
+                // If failure, print error
+                printf("WriteMem failed at index %d\n", i);
+                machine->WriteRegister(2, -1);  // Signal error to user
+                delete[] kernelBuffer; // Freeing kernel memory
+                incrementPC(); // Advance 
+                return;
+            }
+        }
+    
+        // Free kernel buffer  
+        delete[] kernelBuffer;
+        // Return number of bytes read to user
+        machine->WriteRegister(2, bytesRead);
+        // Advance 
+        incrementPC();
+    }
+    else if ((which == SyscallException) && (type == SC_Close))
+    {
+        int fileId = machine->ReadRegister(4);
+        bool success = doClose(fileId);
+        machine->WriteRegister(2, success ? 0 : -1);
+        incrementPC();
+    }
+    else if ((which == SyscallException) && (type == SC_Write)) {
+        int fileId = machine->ReadRegister(4);    // File descriptor
+        int virtAddr = machine->ReadRegister(5);  // User buffer address
+        int size = machine->ReadRegister(6);      // Size to write
+    
+        // Validating input 
+        if (size <= 0 || virtAddr < 0) {
+            machine->WriteRegister(2, -1);
+            incrementPC();
+            return;
+        }
+    
+        // Print for debugging  - Trinity
+        printf("SC_Write: fileId = %d, virtAddr = %d, size = %d\n", fileId, virtAddr, size);
+    
+        // Allocate kernel buffer to hold data 
+        char *buffer = new char[size];
+    
+        // Copying data from user space to kernel space
+        for (int i = 0; i < size; i++) {
+            int value; // Temp hold value read from user memory
+            // Read byte form user buffer virtAddr + 1 
+            if (!machine->ReadMem(virtAddr + i, 1, &value)) {
+                printf("SC_Write: Failed to read user memory at byte %d\n", i);
+                machine->WriteRegister(2, -1);  // indicate error to user
+                delete[] buffer; // Free kernel buffer
+                incrementPC(); // Advance
+                return;
+            }
+            // Store byte read into kernel buffer
+            buffer[i] = (char)value;
+        }
+    
+        // Write user data
+        int bytesWritten = doWrite(fileId, buffer, size);
+        // Free kernel buffer
+        delete[] buffer;
+        // Return number of bytes written
+        machine->WriteRegister(2, bytesWritten);
+        // Advance
+        incrementPC();
+    }
+    
 }
